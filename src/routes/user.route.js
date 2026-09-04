@@ -26,10 +26,10 @@ router.get(
         name: true,
         role: true,
         isActive: true,
-        createAt: true,
+        createdAt: true,
         updatedAt: true,
       },
-      orderBy: { createAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return ApiResponse.success(res, "Users list retrieved successfully.", {
@@ -60,7 +60,7 @@ router.get(
         name: true,
         role: true,
         isActive: true,
-        createAt: true,
+        createdAt: true,
         updatedAt: true,
       },
     });

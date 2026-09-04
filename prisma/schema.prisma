@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,39 +14,123 @@ enum Role {
   USER
   ADMIN
   MODERATOR
+  ORGANIZER
+}
+
+enum TicketStatus {
+  AVAILABLE
+  HELD
+  SOLD
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+  CANCELLED
 }
 
 // User entity
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  username    String   @unique
-  password    String
-  name        String?
-  role        Role     @default(USER)
-  isActive    Boolean  @default(true) @map("is_active")
-  createAt    DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt  @map("updated_at")
+  id            String         @id @default(uuid())
+  email         String         @unique
+  username      String         @unique
+  password      String
+  name          String?
+  role          Role           @default(USER)
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  // 1 - N Relationship
+  // Relationships
   refreshTokens RefreshToken[]
+  events        Event[]        @relation("OrganizerEvents")
+  orders        Order[]
 
   @@map("users")
 }
 
-
 // Refresh Token / Session Entity
 model RefreshToken {
-  id          String   @id @default(uuid())
-  token       String   @unique
-  userId      String   @map("user_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  expiresAt   DateTime @map("expires_at")
-  isRevoked   Boolean  @default(false) @map("is_revoked")
-  userAgent   String?  @map("user_agent")
-  ipAddress   String?  @map("ip_address")
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+// Event Entity
+model Event {
+  id          String       @id @default(uuid())
+  title       String
+  description String
+  bannerUrl   String?      @map("banner_url")
+  startTime   DateTime     @map("start_time")
+  endTime     DateTime     @map("end_time")
+  organizerId String       @map("organizer_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  organizer   User         @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+  ticketTiers TicketTier[]
+
+  @@map("events")
+}
+
+// TicketTier Entity (e.g. VIP, Standard, Early Bird)
+model TicketTier {
+  id             String   @id @default(uuid())
+  eventId        String   @map("event_id")
+  name           String
+  price          Decimal  @db.Decimal(12, 2)
+  totalStock     Int      @map("total_stock")
+  availableStock Int      @map("available_stock")
+  version        Int      @default(0) // Optimistic locking
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  orders         Order[]
+
+  @@map("ticket_tiers")
+}
+
+// Order Entity (Booking / Hold / Checkout)
+model Order {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  ticketTierId   String      @map("ticket_tier_id")
+  quantity       Int         @default(1)
+  totalAmount    Decimal     @map("total_amount") @db.Decimal(12, 2)
+  status         OrderStatus @default(PENDING)
+  expiresAt      DateTime    @map("expires_at")
+  idempotencyKey String?     @unique @map("idempotency_key")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticketTier     TicketTier  @relation(fields: [ticketTierId], references: [id], onDelete: Cascade)
+  auditLogs      AuditLog[]
+
+  @@map("orders")
+}
+
+// AuditLog Entity (Immutable tracking for states & transactions)
+model AuditLog {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  action    String
+  details   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
 }

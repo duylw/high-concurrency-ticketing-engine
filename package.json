@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "test:infra": "node src/scripts/test-infra.js",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },
@@ -13,9 +14,11 @@
     "@prisma/client": "^6.19.3",
     "@prisma/orm-postgres": "^8.0.0-rc.8",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^6.3.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "zod": "^4.5.4"
   },
