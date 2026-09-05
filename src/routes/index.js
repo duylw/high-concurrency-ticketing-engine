@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./auth.route.js";
 import userRoutes from "./user.route.js";
+import eventRoutes from "./event.route.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
 const rootRouter = Router();
@@ -22,5 +23,6 @@ rootRouter.get("/health", (req, res) => {
  */
 rootRouter.use("/auth", authRoutes);
 rootRouter.use("/users", userRoutes);
+rootRouter.use("/events", eventRoutes);
 
 export default rootRouter;

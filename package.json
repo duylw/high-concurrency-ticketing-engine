@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "test:infra": "node src/scripts/test-infra.js",
     "test:auth": "node src/scripts/test-auth-advanced.js",
+    "test:cache": "node src/scripts/test-cache.js",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },
