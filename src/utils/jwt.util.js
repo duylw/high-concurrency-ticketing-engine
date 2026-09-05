@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 /**
  * Generates a short-lived Access Token (default: 15m)
@@ -14,14 +15,19 @@ export const generateAccessToken = (payload) => {
 
 /**
  * Generates a long-lived Refresh Token (default: 7d)
+ * Includes a random jti (JWT ID) to guarantee global uniqueness across rapid rotations
  *
  * @param {Object} payload - Token identifier (userId)
  * @returns {string} Signed JWT Refresh Token
  */
 export const generateRefreshToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
-  });
+  return jwt.sign(
+    { ...payload, jti: crypto.randomUUID() },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+    }
+  );
 };
 
 /**
