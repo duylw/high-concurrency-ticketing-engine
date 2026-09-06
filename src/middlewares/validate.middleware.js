@@ -25,8 +25,9 @@ export const validate = (schema) => {
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        // Format Zod errors into a clean, readable array for client response
-        const formattedErrors = error.errors.map((err) => ({
+        // Format Zod errors into a clean, readable array for client response (supports Zod v3 and v4)
+        const issues = error.issues || error.errors || [];
+        const formattedErrors = issues.map((err) => ({
           field: err.path.slice(1).join("."), // Remove top-level 'body'/'query'/'params' from path
           message: err.message,
         }));
