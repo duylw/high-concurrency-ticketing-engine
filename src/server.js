@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import app from "./app.js";
 import { connectDB, disconnectDB } from "./config/db.js";
 import { connectRedis, disconnectRedis } from "./config/redis.js";
+import { ticketReleaseWorker } from "./workers/ticketRelease.worker.js";
 
 // Load environment variables
 config();
@@ -21,6 +22,7 @@ const startServer = async () => {
     const server = app.listen(PORT, () => {
       console.log(`[INFO] Server is listening on http://localhost:${PORT}`);
       console.log(`[INFO] Health check: http://localhost:${PORT}/api/v1/health`);
+      console.log(`[WORKER] Ticket release worker listening on queue: ticket-release`);
     });
 
     /**
@@ -31,6 +33,8 @@ const startServer = async () => {
 
       server.close(async () => {
         console.log("[SHUTDOWN] HTTP server closed.");
+        await ticketReleaseWorker.close();
+        console.log("[SHUTDOWN] Ticket release worker closed.");
         await disconnectDB();
         await disconnectRedis();
         console.log("[SHUTDOWN] Process terminated cleanly.");

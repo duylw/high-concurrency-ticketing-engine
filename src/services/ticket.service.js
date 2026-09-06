@@ -2,6 +2,9 @@ import { prismaClient } from "../config/db.js";
 import { CacheKeys } from "../constants/cacheKeys.js";
 import { CacheUtil } from "../utils/cache.util.js";
 import { ConflictError, NotFoundError } from "../errors/AppError.js";
+import { ticketReleaseQueue } from "../config/queue.js";
+
+const HOLD_DURATION_MS = parseInt(process.env.TICKET_HOLD_DURATION_MS || "600000", 10);
 
 /**
  * Create a Ticket holding
@@ -11,7 +14,10 @@ import { ConflictError, NotFoundError } from "../errors/AppError.js";
  * @param {number} quantity - Quantity of tickets
  * @returns {Promise<Object>} Created Ticket holding
  */
-export const holdTicket = async (userId, ticketTierId, quantity = 1) => {
+export const holdTicket = async (userId, ticketTierId, quantity = 1, customHoldDurationMs = null) => {
+    const holdDuration = (process.env.NODE_ENV !== "production" && customHoldDurationMs)
+        ? customHoldDurationMs
+        : HOLD_DURATION_MS;
 
     let eventId;
 
@@ -38,7 +44,7 @@ export const holdTicket = async (userId, ticketTierId, quantity = 1) => {
             },
         });
 
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + holdDuration);
         const order = await tx.order.create({
             data: {
                 userId,
@@ -50,10 +56,31 @@ export const holdTicket = async (userId, ticketTierId, quantity = 1) => {
             },
         });
 
-        return order;
-    }, { timeout: 10000 })
+        await tx.auditLog.create({
+            data: {
+                orderId: order.id,
+                action: "TICKET_HOLD",
+                details: `Hold ${quantity} tickets for order ${order.id}`,
+            },
+        });
 
-    await CacheUtil.del(CacheKeys.EVENT_DETAILS(eventId))
+        return order;
+    }, { timeout: 10000 });
+
+    await CacheUtil.del(CacheKeys.EVENT_DETAILS(eventId));
+    await ticketReleaseQueue.add(
+        "release-ticket",
+        {
+            orderId: results.id,
+            ticketTierId: ticketTierId,
+            quantity: quantity,
+            eventId: eventId
+        },
+        {
+            delay: holdDuration,
+            jobId: `release-${results.id}`,
+        }
+    );
 
     return results;
 }
