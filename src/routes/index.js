@@ -3,6 +3,7 @@ import authRoutes from "./auth.route.js";
 import userRoutes from "./user.route.js";
 import eventRoutes from "./event.route.js";
 import ticketRouters from "./ticket.route.js";
+import orderRouters from "./order.route.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
 const rootRouter = Router();
@@ -26,5 +27,6 @@ rootRouter.use("/auth", authRoutes);
 rootRouter.use("/users", userRoutes);
 rootRouter.use("/events", eventRoutes);
 rootRouter.use("/tickets", ticketRouters);
+rootRouter.use("/orders", orderRouters);
 
 export default rootRouter;

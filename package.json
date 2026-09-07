@@ -11,6 +11,7 @@
     "test:cache": "node src/scripts/test-cache.js",
     "test:concurrency": "node src/scripts/test-concurrency.js",
     "test:queue": "node src/scripts/test-queue.js",
+    "test:checkout": "node src/scripts/test-checkout.js",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },

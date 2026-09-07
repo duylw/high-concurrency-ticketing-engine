@@ -3,6 +3,7 @@ import app from "./app.js";
 import { connectDB, disconnectDB } from "./config/db.js";
 import { connectRedis, disconnectRedis } from "./config/redis.js";
 import { ticketReleaseWorker } from "./workers/ticketRelease.worker.js";
+import { notificationWorker } from "./workers/notification.worker.js";
 
 // Load environment variables
 config();
@@ -23,6 +24,7 @@ const startServer = async () => {
       console.log(`[INFO] Server is listening on http://localhost:${PORT}`);
       console.log(`[INFO] Health check: http://localhost:${PORT}/api/v1/health`);
       console.log(`[WORKER] Ticket release worker listening on queue: ticket-release`);
+      console.log(`[WORKER] Notification worker listening on queue: notification`);
     });
 
     /**
@@ -35,6 +37,8 @@ const startServer = async () => {
         console.log("[SHUTDOWN] HTTP server closed.");
         await ticketReleaseWorker.close();
         console.log("[SHUTDOWN] Ticket release worker closed.");
+        await notificationWorker.close();
+        console.log("[SHUTDOWN] Notification worker closed.");
         await disconnectDB();
         await disconnectRedis();
         console.log("[SHUTDOWN] Process terminated cleanly.");
