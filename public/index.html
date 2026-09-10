@@ -173,13 +173,18 @@
   <script type="module">
     import { toast } from '/js/modules/ui/toast.js';
     import { modalManager } from '/js/modules/ui/modal.js';
+    import { authModal } from '/js/modules/auth/auth.modal.js';
 
     document.getElementById('btn-test-toast')?.addEventListener('click', () => {
-      toast.success('Hệ Thống Sẵn Sàng', 'Design System Dark Mode đã tải thành công 100%!');
+      toast.success('Hệ Thống Sẵn Sàng', 'Design System Dark Mode & Auth Layer đã tải thành công 100%!');
     });
 
     document.getElementById('btn-login-trigger')?.addEventListener('click', () => {
-      modalManager.open('demo-modal');
+      authModal.open('login');
+    });
+
+    document.getElementById('btn-register-trigger')?.addEventListener('click', () => {
+      authModal.open('register');
     });
 
     document.getElementById('btn-modal-confirm')?.addEventListener('click', () => {
