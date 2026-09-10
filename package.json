@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "db:seed": "node src/scripts/seed-demo-users.js",
+    "db:reset": "node src/scripts/reset-and-seed.js",
     "test:infra": "node src/scripts/test-infra.js",
     "test:auth": "node src/scripts/test-auth-advanced.js",
     "test:cache": "node src/scripts/test-cache.js",
