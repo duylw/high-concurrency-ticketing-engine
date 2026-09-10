@@ -10,6 +10,9 @@ export const createEventSchema = z.object({
     bannerUrl: z.url("Banner URL must be a valid URL").optional(),
     startTime: z.iso.datetime("Start time must be a valid ISO datetime string"),
     endTime: z.iso.datetime("End time must be a valid ISO datetime string"),
+    saleStartTime: z.iso.datetime().optional().nullable(),
+    saleEndTime: z.iso.datetime().optional().nullable(),
+    status: z.enum(["DRAFT", "PUBLISHED", "CLOSED", "CANCELLED"]).optional(),
   }),
 });
 
@@ -40,6 +43,9 @@ export const updateEventSchema = z.object({
     bannerUrl: z.url().optional(),
     startTime: z.iso.datetime().optional(),
     endTime: z.iso.datetime().optional(),
+    saleStartTime: z.iso.datetime().optional().nullable(),
+    saleEndTime: z.iso.datetime().optional().nullable(),
+    status: z.enum(["DRAFT", "PUBLISHED", "CLOSED", "CANCELLED"]).optional(),
   }),
 });
 

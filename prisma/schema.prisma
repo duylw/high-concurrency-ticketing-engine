@@ -28,6 +28,14 @@ enum OrderStatus {
   COMPLETED
   EXPIRED
   CANCELLED
+  CHECKED_IN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  CANCELLED
 }
 
 // User entity
@@ -68,18 +76,21 @@ model RefreshToken {
 
 // Event Entity
 model Event {
-  id          String       @id @default(uuid())
-  title       String
-  description String
-  bannerUrl   String?      @map("banner_url")
-  startTime   DateTime     @map("start_time")
-  endTime     DateTime     @map("end_time")
-  organizerId String       @map("organizer_id")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  id            String       @id @default(uuid())
+  title         String
+  description   String
+  bannerUrl     String?      @map("banner_url")
+  startTime     DateTime     @map("start_time")
+  endTime       DateTime     @map("end_time")
+  saleStartTime DateTime?    @map("sale_start_time")
+  saleEndTime   DateTime?    @map("sale_end_time")
+  status        EventStatus  @default(PUBLISHED)
+  organizerId   String       @map("organizer_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  organizer   User         @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
-  ticketTiers TicketTier[]
+  organizer     User         @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+  ticketTiers   TicketTier[]
 
   @@map("events")
 }

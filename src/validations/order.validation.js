@@ -1,7 +1,10 @@
-import z from "zod"
+import z from "zod";
 
-export const orderCheckoutSchema = z.object({
+export const orderIdParamSchema = z.object({
     params: z.object({
-        id: z.uuid()
-    })
-}) 
+        id: z.uuid(),
+    }),
+});
+
+export const orderCheckoutSchema = orderIdParamSchema;
+ 

@@ -63,3 +63,26 @@ export const updateEvent = catchAsync(async (req, res) => {
   );
   return ApiResponse.success(res, "Event updated successfully.", event);
 });
+
+/**
+ * Get all events created by current organizer with sales analytics
+ * GET /api/v1/events/organizer/my-events
+ */
+export const getOrganizerEvents = catchAsync(async (req, res) => {
+  const events = await eventService.getOrganizerEvents(req.user.id);
+  return ApiResponse.success(res, "Organizer events retrieved successfully.", events);
+});
+
+/**
+ * Delete or cancel an Event
+ * DELETE /api/v1/events/:id
+ */
+export const deleteEvent = catchAsync(async (req, res) => {
+  const result = await eventService.deleteEvent(
+    req.user.id,
+    req.user.role,
+    req.params.id
+  );
+  return ApiResponse.success(res, result.message, result);
+});
+

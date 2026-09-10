@@ -20,6 +20,18 @@ const router = Router();
 router.get("/", eventController.getEvents);
 
 /**
+ * @route   GET /api/v1/events/organizer/my-events
+ * @desc    Get organizer's created events with sales metrics
+ * @access  Private (ORGANIZER, ADMIN)
+ */
+router.get(
+  "/organizer/my-events",
+  authenticateToken,
+  authorizeRoles("ORGANIZER", "ADMIN"),
+  eventController.getOrganizerEvents
+);
+
+/**
  * @route   GET /api/v1/events/:id
  * @desc    Get event details by ID (Cache-Aside)
  * @access  Public
@@ -63,6 +75,19 @@ router.patch(
   authorizeRoles("ORGANIZER", "ADMIN"),
   validate(updateEventSchema),
   eventController.updateEvent
+);
+
+/**
+ * @route   DELETE /api/v1/events/:id
+ * @desc    Delete or cancel an event
+ * @access  Private (ORGANIZER, ADMIN)
+ */
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("ORGANIZER", "ADMIN"),
+  validate(eventIdParamSchema),
+  eventController.deleteEvent
 );
 
 export default router;

@@ -19,6 +19,9 @@ export const createEvent = async (organizerId, eventData) => {
       ...eventData,
       startTime: new Date(eventData.startTime),
       endTime: new Date(eventData.endTime),
+      ...(eventData.saleStartTime && { saleStartTime: new Date(eventData.saleStartTime) }),
+      ...(eventData.saleEndTime && { saleEndTime: new Date(eventData.saleEndTime) }),
+      ...(eventData.status && { status: eventData.status }),
       organizerId,
     },
     include: {
@@ -191,6 +194,9 @@ export const updateEvent = async (userId, userRole, eventId, updateData) => {
       ...updateData,
       ...(updateData.startTime && { startTime: new Date(updateData.startTime) }),
       ...(updateData.endTime && { endTime: new Date(updateData.endTime) }),
+      ...(updateData.saleStartTime && { saleStartTime: new Date(updateData.saleStartTime) }),
+      ...(updateData.saleEndTime && { saleEndTime: new Date(updateData.saleEndTime) }),
+      ...(updateData.status && { status: updateData.status }),
     },
     include: {
       ticketTiers: true,
@@ -202,4 +208,125 @@ export const updateEvent = async (userId, userRole, eventId, updateData) => {
   await CacheUtil.delPattern(CacheKeys.ALL_EVENTS_PATTERN);
 
   return updatedEvent;
+};
+
+/**
+ * Get all events organized by current organizer with aggregate sales metrics
+ *
+ * @param {string} organizerId - ID of organizer
+ * @returns {Promise<Array>} List of events with analytics
+ */
+export const getOrganizerEvents = async (organizerId) => {
+  const events = await prismaClient.event.findMany({
+    where: { organizerId },
+    include: {
+      ticketTiers: {
+        include: {
+          orders: {
+            where: {
+              status: { in: ["COMPLETED", "CHECKED_IN"] },
+            },
+            select: {
+              quantity: true,
+              totalAmount: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return events.map((event) => {
+    let totalStock = 0;
+    let availableStock = 0;
+    let totalTicketsSold = 0;
+    let totalRevenue = 0;
+
+    event.ticketTiers.forEach((tier) => {
+      totalStock += tier.totalStock;
+      availableStock += tier.availableStock;
+      tier.orders.forEach((order) => {
+        totalTicketsSold += order.quantity;
+        totalRevenue += Number(order.totalAmount);
+      });
+    });
+
+    const soldOutPercentage = totalStock > 0 ? Math.round((totalTicketsSold / totalStock) * 100) : 0;
+
+    return {
+      ...event,
+      stats: {
+        totalStock,
+        availableStock,
+        totalTicketsSold,
+        totalRevenue,
+        soldOutPercentage,
+      },
+    };
+  });
+};
+
+/**
+ * Delete or cancel an event
+ *
+ * @param {string} userId - User ID
+ * @param {string} userRole - User Role
+ * @param {string} eventId - Event ID
+ * @returns {Promise<Object>} Status message
+ */
+export const deleteEvent = async (userId, userRole, eventId) => {
+  const event = await prismaClient.event.findUnique({
+    where: { id: eventId },
+    include: {
+      ticketTiers: {
+        include: {
+          orders: {
+            select: { id: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!event) {
+    throw new NotFoundError("Event not found.");
+  }
+
+  if (userRole !== "ADMIN" && event.organizerId !== userId) {
+    throw new ForbiddenError("You do not have permission to delete this event.");
+  }
+
+  // Count total orders across all tiers
+  const totalOrders = event.ticketTiers.reduce((acc, tier) => acc + tier.orders.length, 0);
+
+  if (totalOrders > 0) {
+    // Cannot hard-delete because orders exist: Soft-cancel the event
+    await prismaClient.event.update({
+      where: { id: eventId },
+      data: { status: "CANCELLED" },
+    });
+
+    await CacheUtil.del(CacheKeys.EVENT_DETAILS(eventId));
+    await CacheUtil.delPattern(CacheKeys.ALL_EVENTS_PATTERN);
+
+    return {
+      message: "Event has existing orders. Status changed to CANCELLED instead of hard-deletion.",
+      status: "CANCELLED",
+      eventId,
+    };
+  }
+
+  // No orders exist: Safe to hard delete
+  await prismaClient.ticketTier.deleteMany({ where: { eventId } });
+  await prismaClient.event.delete({ where: { id: eventId } });
+
+  await CacheUtil.del(CacheKeys.EVENT_DETAILS(eventId));
+  await CacheUtil.delPattern(CacheKeys.ALL_EVENTS_PATTERN);
+
+  return {
+    message: "Event deleted successfully.",
+    eventId,
+  };
 };

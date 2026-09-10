@@ -12,3 +12,18 @@ export const checkoutController = catchAsync(async (req, res) => {
     return ApiResponse.created(res, "Order checked out successfully.", order)
 })
 
+export const getMyOrders = catchAsync(async (req, res) => {
+    const orders = await orderService.getMyOrders(req.user.id);
+    return ApiResponse.success(res, "User orders retrieved successfully.", orders);
+});
+
+export const checkInOrder = catchAsync(async (req, res) => {
+    const order = await orderService.checkInOrder(
+        req.user.id,
+        req.user.role,
+        req.params.id
+    );
+    return ApiResponse.success(res, "Ticket checked in successfully.", order);
+});
+
+
