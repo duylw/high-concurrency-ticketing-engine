@@ -1,0 +1,111 @@
+/* Modal Component */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(4, 7, 13, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-normal);
+}
+
+.modal-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl), 0 0 50px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  transform: scale(0.95) translateY(10px);
+  transition: all var(--transition-normal);
+}
+
+.modal-overlay.is-active .modal-container {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.modal-close-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  transition: all var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Modal Tab Bar (e.g. Login / Register) */
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-tab-btn {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.modal-tab-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.modal-tab-btn.is-active {
+  color: var(--color-brand-neon);
+  border-bottom-color: var(--color-brand-primary);
+  background: rgba(99, 102, 241, 0.05);
+}

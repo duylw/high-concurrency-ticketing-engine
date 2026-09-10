@@ -1,0 +1,38 @@
+/* ===================================================================
+   TICKETING ENGINE - MASTER DESIGN SYSTEM AGGREGATOR
+   Modern Dark Mode, Glassmorphism & High-Performance Micro-Interactions
+   =================================================================== */
+
+/* Google Fonts: Outfit & Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+/* 1. Base Layer */
+@import url('./base/reset.css');
+@import url('./base/variables.css');
+@import url('./base/typography.css');
+
+/* 2. Component Layer */
+@import url('./components/buttons.css');
+@import url('./components/cards.css');
+@import url('./components/forms.css');
+@import url('./components/modal.css');
+@import url('./components/toast.css');
+@import url('./components/navbar.css');
+
+/* 3. Layout & Responsive Layer */
+@import url('./layouts/grid.css');
+@import url('./layouts/responsive.css');
+
+/* Global Decorative Background Gradients */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(13, 17, 26, 0) 70%);
+  z-index: -1;
+  pointer-events: none;
+}

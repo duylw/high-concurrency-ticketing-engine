@@ -1,0 +1,63 @@
+/* Form Controls & Inputs */
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(8px);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--color-brand-primary);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px var(--color-brand-glow);
+  outline: none;
+}
+
+.form-input.is-invalid {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-glow);
+}
+
+.form-error {
+  font-size: 0.8125rem;
+  color: #F87171;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.form-error.is-visible {
+  display: block;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

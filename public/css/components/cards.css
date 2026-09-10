@@ -1,0 +1,52 @@
+/* Card Components */
+.glass-card {
+  background: var(--color-bg-glass-card);
+  backdrop-filter: blur(var(--blur-backdrop));
+  -webkit-backdrop-filter: blur(var(--blur-backdrop));
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card:hover {
+  background: var(--color-bg-glass-card-hover);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-xl), 0 0 30px rgba(99, 102, 241, 0.12);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  margin-bottom: 1rem;
+}
+
+.card-body {
+  color: var(--color-text-secondary);
+}
+
+.card-footer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Interactive Event Card with Banner */
+.event-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.event-banner {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+  background: var(--color-bg-tertiary);
+}

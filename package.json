@@ -15,6 +15,7 @@
     "test:queue": "node src/scripts/test-queue.js",
     "test:checkout": "node src/scripts/test-checkout.js",
     "test:domain": "node src/scripts/test-domain-expansion.js",
+    "test:ui": "node src/scripts/test-frontend-ui.js",
     "benchmark:read": "node src/scripts/benchmark-read.js",
     "benchmark:flash-sale": "node src/scripts/benchmark-flash-sale.js",
     "test:benchmark": "npm run benchmark:read && npm run benchmark:flash-sale",
