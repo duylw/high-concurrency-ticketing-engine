@@ -1,0 +1,409 @@
+/* ===================================================================
+   GATE CHECK-IN SCANNER STYLESHEET (Task 11B)
+   Anti-Passback Visual Alarms, Laser Viewport & Real-time Audit Feed
+   =================================================================== */
+
+.scanner-view-wrap {
+  padding: 2rem 0 4rem;
+  min-height: calc(100vh - 80px);
+}
+
+.scanner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.scanner-title-group h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scanner-title-group p {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.scanner-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scanner-stat-badge {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scanner-stat-badge .stat-val {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10B981;
+}
+
+.scanner-stat-badge .stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* 2-Column Responsive Layout */
+.scanner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .scanner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left Column: Viewport & Input */
+.scanner-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.scanner-viewport-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #06090F;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px dashed var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.scanner-video.is-active {
+  display: block;
+}
+
+.scanner-overlay-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #6366F1;
+  box-shadow: 0 0 15px #6366F1, 0 0 30px #6366F1;
+  animation: scanLine 2.5s infinite ease-in-out;
+  display: none;
+  z-index: 5;
+}
+
+.scanner-overlay-laser.is-active {
+  display: block;
+}
+
+@keyframes scanLine {
+  0% { top: 5%; opacity: 0.2; }
+  50% { top: 90%; opacity: 1; }
+  100% { top: 5%; opacity: 0.2; }
+}
+
+.scanner-reticle {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(99, 102, 241, 0.4);
+  border-radius: 16px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(6, 9, 15, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-reticle-corners {
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+}
+
+.scanner-reticle-corners::before,
+.scanner-reticle-corners::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #6366F1;
+  border-style: solid;
+}
+
+.scanner-reticle-corners::before {
+  top: 0; left: 0;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 12px;
+}
+
+.scanner-reticle-corners::after {
+  bottom: 0; right: 0;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 12px;
+}
+
+.scanner-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.scanner-input-group input {
+  flex: 1;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-family: monospace;
+  font-size: 0.9375rem;
+}
+
+.scanner-input-group input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.scanner-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Right Column: Visual Alarm State & Inspection Card */
+.scanner-result-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.scanner-alarm-card {
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* State 0: Idle Waiting */
+.scanner-alarm-card.status-idle {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+/* State 1: Valid Ticket Check-in */
+.scanner-alarm-card.status-valid {
+  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(6, 78, 59, 0.4) 100%), var(--color-surface);
+  border-color: #10B981;
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.35);
+  animation: pulseGreen 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulseGreen {
+  from { box-shadow: 0 0 20px rgba(16, 185, 129, 0.25); }
+  to { box-shadow: 0 0 45px rgba(16, 185, 129, 0.5); }
+}
+
+.scanner-alarm-card.status-valid .alarm-badge {
+  background: #10B981;
+  color: #FFFFFF;
+}
+
+.scanner-alarm-card.status-valid .alarm-title {
+  color: #10B981;
+}
+
+/* State 2: Anti-Passback Alert (CRITICAL RED) */
+.scanner-alarm-card.status-alert {
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.25) 0%, rgba(127, 29, 29, 0.5) 100%), var(--color-surface);
+  border-color: #EF4444;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.5);
+  animation: pulseRed 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulseRed {
+  from { box-shadow: 0 0 25px rgba(239, 68, 68, 0.35); transform: scale(1); }
+  to { box-shadow: 0 0 60px rgba(239, 68, 68, 0.7); transform: scale(1.01); }
+}
+
+.scanner-alarm-card.status-alert .alarm-badge {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+.scanner-alarm-card.status-alert .alarm-title {
+  color: #EF4444;
+}
+
+/* State 3: Warning / Invalid / Unpaid (AMBER) */
+.scanner-alarm-card.status-warning {
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.2) 0%, rgba(120, 53, 15, 0.4) 100%), var(--color-surface);
+  border-color: #F59E0B;
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.3);
+}
+
+.scanner-alarm-card.status-warning .alarm-badge {
+  background: #F59E0B;
+  color: #000000;
+}
+
+.scanner-alarm-card.status-warning .alarm-title {
+  color: #F59E0B;
+}
+
+.alarm-badge {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.alarm-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.alarm-message {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  max-width: 440px;
+  margin: 0 auto 1.5rem;
+}
+
+/* Ticket Inspector Details Table */
+.ticket-details-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  text-align: left;
+}
+
+.ticket-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.875rem;
+}
+
+.ticket-detail-row:last-child {
+  border-bottom: none;
+}
+
+.ticket-detail-row .label {
+  color: var(--color-text-muted);
+}
+
+.ticket-detail-row .val {
+  font-weight: 600;
+  color: var(--color-text);
+  font-family: monospace;
+}
+
+/* Recent Scans Session Feed */
+.scan-feed-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.scan-feed-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scan-feed-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.scan-feed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--color-border);
+  font-size: 0.8125rem;
+}
+
+.scan-feed-item.is-valid {
+  border-left-color: #10B981;
+}
+
+.scan-feed-item.is-conflict {
+  border-left-color: #EF4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.scan-feed-item.is-error {
+  border-left-color: #F59E0B;
+}
+
+.scan-feed-item .feed-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.scan-feed-item .feed-time {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
