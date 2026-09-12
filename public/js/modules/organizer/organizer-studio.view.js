@@ -103,7 +103,10 @@ class OrganizerStudioView {
             <h1>Kênh Quản Trị & Doanh Thu Sự Kiện</h1>
             <p>Báo cáo doanh thu thực tế, tiến độ bán vé và điều phối sự kiện thời gian thực</p>
           </div>
-          <div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <a href="#my-orders" class="btn btn-ghost" style="text-decoration: none; font-size: 0.875rem;">
+              Vé Cá Nhân Của Tôi
+            </a>
             <button class="btn btn-primary" id="btn-create-event-top" style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700;">
               <span>+ Tạo Sự Kiện Mới</span>
             </button>

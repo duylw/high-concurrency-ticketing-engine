@@ -165,6 +165,12 @@ class AuthStore {
       storage.removeItem(CONFIG.STORAGE_KEYS.USER_DATA);
     }
 
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('active_hold_order');
+      }
+    } catch (e) {}
+
     this._broadcastState();
   }
 

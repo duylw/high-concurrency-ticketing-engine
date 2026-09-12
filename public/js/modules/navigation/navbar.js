@@ -59,15 +59,15 @@ class NavbarController {
 
     this.container.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <a href="#my-orders" class="btn btn-ghost btn-sm" id="btn-nav-orders" style="font-weight: 500; text-decoration: none;">
+          Vé Của Tôi
+        </a>
+
         ${isOrganizer ? `
           <a href="#organizer-studio" class="btn btn-neon btn-sm" id="btn-nav-studio" style="font-weight: 700; text-decoration: none;">
             Kênh Ban Tổ Chức
           </a>
-        ` : `
-          <a href="#my-orders" class="btn btn-ghost btn-sm" id="btn-nav-orders" style="font-weight: 500; text-decoration: none;">
-            Vé Của Tôi
-          </a>
-        `}
+        ` : ''}
 
         <!-- User Profile Tag & Dropdown -->
         <div class="user-menu" id="user-menu-root">

@@ -8,7 +8,7 @@ import redisClient from "../config/redis.js";
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "test" ? 1000 : 20, // 20 requests per 15 mins (lenient for test)
+  max: process.env.NODE_ENV === "production" ? 20 : 1000, // 1000 in dev/test, 20 in production
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({

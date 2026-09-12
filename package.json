@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "db:seed": "node src/scripts/seed-demo-users.js",
     "seed:events": "node src/scripts/seed-demo-events.js",
+    "cache:clear": "node src/scripts/clear-cache.js",
     "db:reset": "node src/scripts/reset-and-seed.js",
     "test:infra": "node src/scripts/test-infra.js",
     "test:auth": "node src/scripts/test-auth-advanced.js",

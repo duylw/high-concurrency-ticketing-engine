@@ -12,6 +12,7 @@ import { ordersApi } from '../orders/orders.api.js';
 import { eticketModal } from './eticket.modal.js';
 import { eventBus } from '../../core/event-bus.js';
 import { CONFIG } from '../../core/config.js';
+import { authStore } from '../auth/auth.store.js';
 
 class CheckoutDrawer {
   constructor() {
@@ -100,11 +101,31 @@ class CheckoutDrawer {
       }
     });
 
+    // Listen to Auth State Changes: clean up on logout
+    eventBus.subscribe(CONFIG.EVENTS.AUTH_STATE_CHANGED, ({ isAuthenticated, user }) => {
+      if (!isAuthenticated) {
+        this._clearActiveHold();
+        if (this.modalEl && this.modalEl.classList.contains('is-active')) {
+          modalManager.close(this.modalEl);
+        }
+      } else if (user) {
+        if (this.activeHoldOrder?.userId && this.activeHoldOrder.userId !== user.id) {
+          this._clearActiveHold();
+        } else {
+          this.checkRestoredHold();
+        }
+      }
+    });
+
     this.checkRestoredHold();
   }
 
   open(order) {
     if (!this.modalEl) this.init();
+
+    if (authStore.user?.id && !order.userId) {
+      order.userId = authStore.user.id;
+    }
 
     this.currentOrder = order;
     this.activeHoldOrder = order;
@@ -132,6 +153,11 @@ class CheckoutDrawer {
     this._stopTimer();
     this.currentOrder = null;
 
+    if (!authStore.isAuthenticated) {
+      this._clearActiveHold();
+      return;
+    }
+
     // If active hold is still valid, display floating bottom banner
     if (this.activeHoldOrder) {
       const remainingMs = new Date(this.activeHoldOrder.expiresAt).getTime() - Date.now();
@@ -156,7 +182,7 @@ class CheckoutDrawer {
 
   _showFloatingBanner() {
     this._removeFloatingBanner();
-    if (!this.activeHoldOrder) return;
+    if (!this.activeHoldOrder || !authStore.isAuthenticated) return;
 
     const expiresAt = new Date(this.activeHoldOrder.expiresAt).getTime();
     if (expiresAt <= Date.now()) {
@@ -234,11 +260,14 @@ class CheckoutDrawer {
         const stored = sessionStorage.getItem('active_hold_order');
         if (stored) {
           const order = JSON.parse(stored);
-          if (order?.expiresAt && new Date(order.expiresAt).getTime() > Date.now()) {
+          const currentUser = authStore.user;
+          const isBelongsToUser = !order?.userId || (currentUser && order.userId === currentUser.id);
+
+          if (authStore.isAuthenticated && isBelongsToUser && order?.expiresAt && new Date(order.expiresAt).getTime() > Date.now()) {
             this.activeHoldOrder = order;
             this._showFloatingBanner();
           } else {
-            sessionStorage.removeItem('active_hold_order');
+            this._clearActiveHold();
           }
         }
       }
