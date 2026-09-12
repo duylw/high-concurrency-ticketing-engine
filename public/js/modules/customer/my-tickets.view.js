@@ -107,6 +107,12 @@ class MyTicketsView {
       if (this.currentFilter === 'PENDING') {
         return order.status === 'PENDING' && new Date(order.expiresAt).getTime() > now;
       }
+      if (this.currentFilter === 'COMPLETED') {
+        return order.status === 'COMPLETED' || order.status === 'PARTIALLY_CHECKED_IN';
+      }
+      if (this.currentFilter === 'CHECKED_IN') {
+        return order.status === 'CHECKED_IN' || order.status === 'PARTIALLY_CHECKED_IN';
+      }
       return order.status === this.currentFilter;
     });
 
@@ -134,19 +140,25 @@ class MyTicketsView {
           const bannerImg = event.bannerUrl || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80';
 
           const isCompleted = order.status === 'COMPLETED';
+          const isPartiallyCheckedIn = order.status === 'PARTIALLY_CHECKED_IN';
           const isCheckedIn = order.status === 'CHECKED_IN';
           const isPending = order.status === 'PENDING';
           const expiresAtTime = new Date(order.expiresAt).getTime();
           const remainingMs = expiresAtTime - now;
           const isPendingActive = isPending && remainingMs > 0;
+          const tickets = order.tickets || [];
 
           if (isPendingActive) hasActivePending = true;
 
           let statusBadge = '<span class="badge badge-sold-out">Đã Hết Hạn</span>';
           if (isCompleted) {
             statusBadge = '<span class="badge badge-success">&#x2714; Đã Thanh Toán (Hợp Lệ)</span>';
+          } else if (isPartiallyCheckedIn) {
+            const checkedInCount = tickets.filter(t => t.status === 'CHECKED_IN').length;
+            const totalTickets = tickets.length || order.quantity || 1;
+            statusBadge = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.2); color: #FCD34D; border: 1px solid rgba(245, 158, 11, 0.4);">&#x23F3; Đã Check-in (${checkedInCount}/${totalTickets} vé)</span>`;
           } else if (isCheckedIn) {
-            statusBadge = '<span class="badge badge-brand">&#x2705; Đã Check-in Tại Cổng</span>';
+            statusBadge = '<span class="badge badge-brand">&#x2705; Đã Check-in Toàn Bộ</span>';
           } else if (isPendingActive) {
             const totalSec = Math.floor(remainingMs / 1000);
             const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
@@ -159,62 +171,109 @@ class MyTicketsView {
             `;
           }
 
+          // Itemized tickets sub-list markup
+          let itemizedTicketsMarkup = '';
+          if (tickets.length > 0) {
+            itemizedTicketsMarkup = `
+              <div class="order-itemized-tickets">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                  Danh Sách Vé Vào Cửa (${tickets.length} Vé)
+                </div>
+                ${tickets.map((t, idx) => {
+                  const isTktChecked = t.status === 'CHECKED_IN';
+                  return `
+                    <div class="ticket-item-row">
+                      <div class="ticket-item-info">
+                        <span style="font-weight: 700; color: var(--color-text-primary);">Vé ${idx + 1}</span>
+                        <span class="ticket-item-code">${escapeHtml(t.ticketCode)}</span>
+                        <span class="ticket-tab-badge ${isTktChecked ? 'checked-in' : 'ready'}">
+                          ${isTktChecked ? 'Đã qua cổng' : 'Hợp lệ / Sẵn sàng'}
+                        </span>
+                      </div>
+                      <button type="button" class="btn btn-ghost btn-xs btn-view-single-ticket" data-order-id="${order.id}" data-ticket-index="${idx}">
+                        &#x1F50D; Xem Mã QR
+                      </button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }
+
           return `
-            <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
-              <!-- Left: Image & Info -->
-              <div style="display: flex; gap: 1.25rem; align-items: center; min-width: 320px; flex: 1;">
-                <div style="width: 100px; height: 100px; background-image: url('${escapeHtml(bannerImg)}'); background-size: cover; background-position: center; border-radius: var(--radius-md); flex-shrink: 0;"></div>
-                
-                <div>
-                  <div style="margin-bottom: 0.35rem;">
-                    ${statusBadge}
+            <div class="glass-card" style="padding: 1.5rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+                <!-- Left: Image & Info -->
+                <div style="display: flex; gap: 1.25rem; align-items: center; min-width: 320px; flex: 1;">
+                  <div style="width: 100px; height: 100px; background-image: url('${escapeHtml(bannerImg)}'); background-size: cover; background-position: center; border-radius: var(--radius-md); flex-shrink: 0;"></div>
+                  
+                  <div>
+                    <div style="margin-bottom: 0.35rem;">
+                      ${statusBadge}
+                    </div>
+                    <h3 style="font-size: 1.15rem; color: var(--color-text-primary); margin-bottom: 0.25rem;">
+                      ${escapeHtml(event.title || 'Sự Kiện')}
+                    </h3>
+                    <p style="font-size: 0.8125rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">
+                      &#x1F4C5; ${formatDateTime(event.startTime || order.createdAt)}
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--color-text-secondary); margin: 0;">
+                      Hạng vé: <strong>${escapeHtml(tier.name || 'Tiêu chuẩn')}</strong> &bull; Số lượng: <strong>${order.quantity} vé</strong>
+                    </p>
                   </div>
-                  <h3 style="font-size: 1.15rem; color: var(--color-text-primary); margin-bottom: 0.25rem;">
-                    ${escapeHtml(event.title || 'Sự Kiện')}
-                  </h3>
-                  <p style="font-size: 0.8125rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">
-                    &#x1F4C5; ${formatDateTime(event.startTime || order.createdAt)}
-                  </p>
-                  <p style="font-size: 0.875rem; color: var(--color-text-secondary); margin: 0;">
-                    Hạng vé: <strong>${escapeHtml(tier.name || 'Tiêu chuẩn')}</strong> &bull; Số lượng: <strong>${order.quantity} vé</strong>
-                  </p>
+                </div>
+
+                <!-- Right: Total & Action -->
+                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+                  <div>
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Tổng tiền</span>
+                    <span style="font-size: 1.25rem; font-weight: 800; color: var(--color-brand-neon);">
+                      ${formatCurrencyVND(order.totalAmount)}
+                    </span>
+                  </div>
+
+                  ${isCompleted || isPartiallyCheckedIn || isCheckedIn ? `
+                    <button type="button" class="btn btn-primary btn-sm btn-view-eticket" data-order-id="${order.id}">
+                      &#x1F3AB; ${tickets.length > 1 ? `Xem ${tickets.length} Vé &amp; QR` : 'Xem Vé &amp; Mã QR'}
+                    </button>
+                  ` : ''}
+
+                  ${isPendingActive ? `
+                    <button type="button" class="btn btn-neon btn-sm btn-resume-checkout" data-order-id="${order.id}">
+                      &#x26A1; Tiếp Tục Thanh Toán
+                    </button>
+                  ` : ''}
                 </div>
               </div>
 
-              <!-- Right: Total & Action -->
-              <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
-                <div>
-                  <span style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Tổng tiền</span>
-                  <span style="font-size: 1.25rem; font-weight: 800; color: var(--color-brand-neon);">
-                    ${formatCurrencyVND(order.totalAmount)}
-                  </span>
-                </div>
-
-                ${isCompleted || isCheckedIn ? `
-                  <button type="button" class="btn btn-primary btn-sm btn-view-eticket" data-order-id="${order.id}">
-                    &#x1F3AB; Xem Vé &amp; Mã QR
-                  </button>
-                ` : ''}
-
-                ${isPendingActive ? `
-                  <button type="button" class="btn btn-neon btn-sm btn-resume-checkout" data-order-id="${order.id}">
-                    &#x26A1; Tiếp Tục Thanh Toán
-                  </button>
-                ` : ''}
-              </div>
+              <!-- Itemized Tickets Section -->
+              ${itemizedTicketsMarkup}
             </div>
           `;
         }).join('')}
       </div>
     `;
 
-    // Bind QR view clicks
+    // Bind Main QR view clicks (opens at ticket 0)
     $$('.btn-view-eticket', listEl).forEach((btn) => {
       btn.addEventListener('click', () => {
         const orderId = btn.dataset.orderId;
         const order = this.orders.find((o) => o.id === orderId);
         if (order) {
-          eticketModal.open(order);
+          eticketModal.open(order, 0);
+        }
+      });
+    });
+
+    // Bind Single Ticket QR view clicks (opens at specific ticket index)
+    $$('.btn-view-single-ticket', listEl).forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const orderId = btn.dataset.orderId;
+        const ticketIdx = parseInt(btn.dataset.ticketIndex, 10) || 0;
+        const order = this.orders.find((o) => o.id === orderId);
+        if (order) {
+          eticketModal.open(order, ticketIdx);
         }
       });
     });

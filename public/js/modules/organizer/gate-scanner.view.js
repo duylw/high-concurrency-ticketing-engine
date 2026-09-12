@@ -396,19 +396,20 @@ export class GateScannerView {
     try {
       if (orderId.startsWith('{') && orderId.endsWith('}')) {
         const parsed = JSON.parse(orderId);
-        orderId = parsed.orderId || parsed.id || orderId;
+        orderId = parsed.ticketCode || parsed.ticketId || parsed.orderId || parsed.id || orderId;
       }
     } catch (e) {
       // Keep raw string if JSON parsing fails
     }
 
-    // 2. Validate basic UUID format
+    // 2. Validate format: standard UUID OR Ticket Code format (TKT-YYYYMM-XXXX-NN)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(orderId)) {
+    const ticketCodeRegex = /^TKT-[0-9]{6}-[A-Z0-9]+-[0-9]+$/i;
+    if (!uuidRegex.test(orderId) && !ticketCodeRegex.test(orderId)) {
       this._setVisualState('warning', {
         badge: 'MÃ KHÔNG HỢP LỆ',
         title: 'Định Dạng Mã Vé Sai',
-        message: `Mã "${escapeHtml(orderId)}" không đúng định dạng chuẩn UUID của hệ thống vé.`,
+        message: `Mã "${escapeHtml(orderId)}" không đúng định dạng chuẩn vé (UUID hoặc TKT-...) của hệ thống.`,
       });
       this.soundFx.playWarning();
       return;
@@ -435,25 +436,43 @@ export class GateScannerView {
       this.stats.checkedIn += 1;
       this._updateStatsCounter();
 
+      let ticketIndexText = '1 vé';
+      let statusDetailMsg = 'Vé hợp lệ và đã được đánh dấu vào cổng thành công.';
+
+      if (order.ticketCode) {
+        const parts = order.ticketCode.split('-');
+        const indexNum = parseInt(parts[parts.length - 1], 10);
+        const totalInOrder = order.order?.quantity || 1;
+        ticketIndexText = `Vé ${indexNum} / ${totalInOrder}`;
+
+        if (order.order?.status === 'PARTIALLY_CHECKED_IN') {
+          statusDetailMsg = `Vé ${indexNum}/${totalInOrder} hợp lệ! Đơn này còn ${order.order?.remainingTickets || 1} vé chưa vào cổng.`;
+        } else if (order.order?.status === 'CHECKED_IN') {
+          statusDetailMsg = `Vé ${indexNum}/${totalInOrder} hợp lệ! 100% vé trong đơn hàng đã hoàn tất check-in.`;
+        }
+      } else if (order.quantity) {
+        ticketIndexText = `${order.quantity} vé`;
+      }
+
       this._setVisualState('valid', {
         badge: 'CHECK-IN THÀNH CÔNG',
         title: 'MỜI VÀO CỬA',
-        message: 'Vé hợp lệ và đã được đánh dấu vào cổng thành công.',
+        message: statusDetailMsg,
         order: {
-          id: order.id,
+          id: order.ticketCode || order.id,
           customerName: order.user?.name || order.user?.email || 'Khách Hàng',
           eventTitle: order.ticketTier?.event?.title || 'Sự Kiện',
           tierName: order.ticketTier?.name || 'Tiêu chuẩn',
-          quantity: `${order.quantity || 1} vé`,
+          quantity: ticketIndexText,
           scannedTime: new Date().toLocaleTimeString('vi-VN'),
         },
       });
 
       this._addHistoryEntry({
-        orderId,
+        orderId: order.ticketCode || orderId,
         status: 'valid',
         customerName: order.user?.name || order.user?.email || 'Khách Hàng',
-        tierName: order.ticketTier?.name || 'Vé',
+        tierName: `${order.ticketTier?.name || 'Vé'} (${ticketIndexText})`,
         time: new Date().toLocaleTimeString('vi-VN'),
       });
 
