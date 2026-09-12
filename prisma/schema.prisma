@@ -29,6 +29,13 @@ enum OrderStatus {
   EXPIRED
   CANCELLED
   CHECKED_IN
+  PARTIALLY_CHECKED_IN
+}
+
+enum TicketItemStatus {
+  ISSUED
+  CHECKED_IN
+  REVOKED
 }
 
 enum EventStatus {
@@ -40,15 +47,15 @@ enum EventStatus {
 
 // User entity
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  username      String         @unique
-  password      String
-  name          String?
-  role          Role           @default(USER)
-  isActive      Boolean        @default(true) @map("is_active")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relationships
   refreshTokens RefreshToken[]
@@ -69,28 +76,28 @@ model RefreshToken {
   userAgent String?  @map("user_agent")
   ipAddress String?  @map("ip_address")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
 
 // Event Entity
 model Event {
-  id            String       @id @default(uuid())
+  id            String      @id @default(uuid())
   title         String
   description   String
-  bannerUrl     String?      @map("banner_url")
-  startTime     DateTime     @map("start_time")
-  endTime       DateTime     @map("end_time")
-  saleStartTime DateTime?    @map("sale_start_time")
-  saleEndTime   DateTime?    @map("sale_end_time")
-  status        EventStatus  @default(PUBLISHED)
-  organizerId   String       @map("organizer_id")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  bannerUrl     String?     @map("banner_url")
+  startTime     DateTime    @map("start_time")
+  endTime       DateTime    @map("end_time")
+  saleStartTime DateTime?   @map("sale_start_time")
+  saleEndTime   DateTime?   @map("sale_end_time")
+  status        EventStatus @default(PUBLISHED)
+  organizerId   String      @map("organizer_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
-  organizer     User         @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
-  ticketTiers   TicketTier[]
+  organizer   User         @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+  ticketTiers TicketTier[]
 
   @@map("events")
 }
@@ -107,8 +114,9 @@ model TicketTier {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  orders         Order[]
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  orders  Order[]
+  tickets Ticket[]
 
   @@map("ticket_tiers")
 }
@@ -126,9 +134,10 @@ model Order {
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ticketTier     TicketTier  @relation(fields: [ticketTierId], references: [id], onDelete: Cascade)
-  auditLogs      AuditLog[]
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticketTier TicketTier @relation(fields: [ticketTierId], references: [id], onDelete: Cascade)
+  auditLogs  AuditLog[]
+  tickets    Ticket[]
 
   @@map("orders")
 }
@@ -141,7 +150,25 @@ model AuditLog {
   details   String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("audit_logs")
+}
+
+// Ticket Entity (Individual Admission E-Ticket)
+model Ticket {
+  id           String           @id @default(uuid())
+  orderId      String           @map("order_id")
+  ticketTierId String           @map("ticket_tier_id")
+  ticketCode   String           @unique @map("ticket_code")
+  qrPayload    String           @map("qr_payload")
+  status       TicketItemStatus @default(ISSUED)
+  checkedInAt  DateTime?        @map("checked_in_at")
+  attendeeName String?          @map("attendee_name")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  order        Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketTier   TicketTier       @relation(fields: [ticketTierId], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
 }

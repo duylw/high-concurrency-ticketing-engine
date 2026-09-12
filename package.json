@@ -22,6 +22,7 @@
     "test:customer": "node src/scripts/test-frontend-customer.js",
     "test:organizer-studio": "node src/scripts/test-frontend-organizer-studio.js",
     "test:gate-scanner": "node src/scripts/test-frontend-gate-scanner.js",
+    "test:itemized-tickets": "node src/scripts/test-itemized-tickets.js",
     "test:prod-health": "node src/scripts/test-prod-health.js",
     "benchmark:read": "node src/scripts/benchmark-read.js",
     "benchmark:flash-sale": "node src/scripts/benchmark-flash-sale.js",

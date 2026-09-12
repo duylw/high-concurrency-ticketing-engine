@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
-import { orderCheckoutSchema, orderIdParamSchema } from "../validations/order.validation.js";
+import { orderCheckoutSchema, orderIdParamSchema, checkInParamSchema } from "../validations/order.validation.js";
 import { holdTicketSchema } from "../validations/ticket.validation.js";
 import { idempotencyMiddleware } from "../middlewares/idempotency.middleware.js";
 import * as orderController from "../controllers/order.controller.js";
@@ -55,7 +55,7 @@ router.post(
     "/:id/check-in",
     authenticateToken,
     authorizeRoles("ORGANIZER", "ADMIN"),
-    validate(orderIdParamSchema),
+    validate(checkInParamSchema),
     orderController.checkInOrder
 );
 
