@@ -18,6 +18,7 @@ import { checkoutDrawer } from './modules/customer/checkout.drawer.js';
 import { eticketModal } from './modules/customer/eticket.modal.js';
 import { organizerStudioView } from './modules/organizer/organizer-studio.view.js';
 import { eventCreateModal } from './modules/organizer/event-create.modal.js';
+import { gateScannerView } from './modules/organizer/gate-scanner.view.js';
 import { formatCurrencyVND } from './utils/formatters.js';
 import { $ } from './utils/dom.util.js';
 
@@ -62,8 +63,9 @@ class Application {
     window.__eticketModal = eticketModal;
     window.__organizerStudioView = organizerStudioView;
     window.__eventCreateModal = eventCreateModal;
+    window.__gateScannerView = gateScannerView;
 
-    console.log('[INFO] Ticketing Engine Organizer Studio (Task 11A) Ready.');
+    console.log('[INFO] Ticketing Engine Gate Scanner (Task 11B) Ready.');
   }
 
   handleRoute(view, param) {
@@ -73,6 +75,8 @@ class Application {
       myTicketsView.render();
     } else if (view === 'organizer-studio') {
       organizerStudioView.render();
+    } else if (view === 'gate-scanner') {
+      gateScannerView.render(param);
     } else {
       catalogView.render();
     }
@@ -87,6 +91,9 @@ class Application {
         myTicketsView.render();
       } else if (current === 'organizer-studio') {
         organizerStudioView.render();
+      } else if (current.startsWith('gate-scanner')) {
+        const parts = current.split('/');
+        gateScannerView.render(parts[1] || null);
       }
     });
 
