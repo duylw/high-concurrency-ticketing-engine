@@ -54,3 +54,5 @@ export const getSkeletonCardsHtml = (count = 3) => {
     </style>
   `;
 };
+
+export const getLoadingCardsHtml = getSkeletonCardsHtml;

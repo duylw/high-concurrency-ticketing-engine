@@ -16,6 +16,8 @@ import { eventDetailView } from './modules/customer/event-detail.view.js';
 import { myTicketsView } from './modules/customer/my-tickets.view.js';
 import { checkoutDrawer } from './modules/customer/checkout.drawer.js';
 import { eticketModal } from './modules/customer/eticket.modal.js';
+import { organizerStudioView } from './modules/organizer/organizer-studio.view.js';
+import { eventCreateModal } from './modules/organizer/event-create.modal.js';
 import { formatCurrencyVND } from './utils/formatters.js';
 import { $ } from './utils/dom.util.js';
 
@@ -32,6 +34,7 @@ class Application {
     checkoutDrawer.init();
     eticketModal.init();
     eventDetailView.init();
+    eventCreateModal.init();
     navbar.init();
 
     // 2. Restore and validate authentication session from LocalStorage
@@ -57,8 +60,10 @@ class Application {
     window.__myTicketsView = myTicketsView;
     window.__checkoutDrawer = checkoutDrawer;
     window.__eticketModal = eticketModal;
+    window.__organizerStudioView = organizerStudioView;
+    window.__eventCreateModal = eventCreateModal;
 
-    console.log('[INFO] Ticketing Engine Customer Storefront & Flash-Sale Engine (Task 10) Ready.');
+    console.log('[INFO] Ticketing Engine Organizer Studio (Task 11A) Ready.');
   }
 
   handleRoute(view, param) {
@@ -66,6 +71,8 @@ class Application {
       eventDetailView.render(param);
     } else if (view === 'my-orders') {
       myTicketsView.render();
+    } else if (view === 'organizer-studio') {
+      organizerStudioView.render();
     } else {
       catalogView.render();
     }
@@ -78,6 +85,8 @@ class Application {
       const current = router.getCurrentRoute();
       if (current === 'my-orders') {
         myTicketsView.render();
+      } else if (current === 'organizer-studio') {
+        organizerStudioView.render();
       }
     });
 

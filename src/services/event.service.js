@@ -264,6 +264,11 @@ export const getOrganizerEvents = async (organizerId) => {
         totalRevenue,
         soldOutPercentage,
       },
+      totalStock,
+      availableStock,
+      totalTicketsSold,
+      totalRevenue,
+      soldOutPercentage,
     };
   });
 };
