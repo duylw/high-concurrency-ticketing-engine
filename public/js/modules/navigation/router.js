@@ -20,8 +20,14 @@ class Router {
     const route = rawHash || 'events';
     this.currentRoute = route;
 
+    const parts = route.split('/');
+    const view = parts[0] || 'events';
+    const param = parts[1] || null;
+
     eventBus.publish(CONFIG.EVENTS.VIEW_CHANGED, {
       route,
+      view,
+      param,
       hash: window.location.hash,
     });
   }

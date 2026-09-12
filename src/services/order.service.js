@@ -61,7 +61,18 @@ export const checkout = async (orderId, userId, idempotencyKey) => {
         }
     )
 
-    return completedOrder
+    return {
+        ...completedOrder,
+        qrPayload: JSON.stringify({
+            orderId: completedOrder.id,
+            eventId: completedOrder.ticketTier?.event?.id,
+            eventTitle: completedOrder.ticketTier?.event?.title,
+            tierName: completedOrder.ticketTier?.name,
+            quantity: completedOrder.quantity,
+            userId: completedOrder.userId,
+            status: completedOrder.status,
+        }),
+    };
 }
 
 /**

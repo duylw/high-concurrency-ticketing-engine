@@ -18,6 +18,7 @@
 @import url('./components/modal.css');
 @import url('./components/toast.css');
 @import url('./components/navbar.css');
+@import url('./components/tickets.css');
 
 /* 3. Layout & Responsive Layer */
 @import url('./layouts/grid.css');

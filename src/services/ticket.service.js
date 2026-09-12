@@ -73,6 +73,15 @@ export const holdTicket = async (userId, ticketTierId, quantity = 1, customHoldD
                 status: "PENDING",
                 expiresAt,
             },
+            include: {
+                ticketTier: {
+                    include: {
+                        event: {
+                            select: { id: true, title: true, bannerUrl: true },
+                        },
+                    },
+                },
+            },
         });
 
         await tx.auditLog.create({

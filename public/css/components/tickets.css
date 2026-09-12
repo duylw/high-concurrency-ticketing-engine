@@ -1,0 +1,312 @@
+/* Tickets, Flash-Sale & Storefront Components */
+
+/* 1. Search Bar */
+.search-bar-wrap {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* 2. Flash-Sale Status Badges */
+.badge-flash-active {
+  background: rgba(99, 102, 241, 0.2);
+  color: #A5B4FC;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  animation: pulseNeon 2s infinite;
+}
+
+.badge-flash-upcoming {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-sold-out {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulseNeon {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+  }
+}
+
+/* 3. Ticket Tier Selection Cards */
+.tier-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tier-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tier-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-border-medium);
+  transform: translateY(-2px);
+}
+
+.tier-card.is-selected {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+}
+
+.tier-card.is-sold-out {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Stock Progress Bar */
+.stock-bar-wrap {
+  width: 100%;
+  max-width: 160px;
+}
+
+.stock-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.stock-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, #10B981, #06B6D4);
+  transition: width var(--transition-normal);
+}
+
+.stock-bar-fill.warning {
+  background: linear-gradient(90deg, #EF4444, #F59E0B);
+}
+
+/* 4. Quantity Selector */
+.qty-selector {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.qty-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+}
+
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.qty-value {
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+/* 5. Flash-Sale Countdown Box */
+.flash-countdown-card {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.countdown-digits {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #A5B4FC;
+}
+
+/* 6. BullMQ Hold 10-Minute Banner */
+.hold-timer-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+
+.hold-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 0 10px #EF4444;
+  animation: pulseDot 1s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* 7. E-Ticket Pass Card */
+.eticket-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.eticket-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+.eticket-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.eticket-qr-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.25rem 0;
+}
+
+/* 8. Floating Active Hold Banner */
+.floating-hold-banner {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-full);
+  padding: 0.65rem 1.25rem 0.65rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  animation: slideUpBanner 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 90vw;
+}
+
+@keyframes slideUpBanner {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.floating-hold-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.floating-hold-text {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.floating-hold-timer {
+  font-family: monospace;
+  font-weight: 800;
+  color: #F87171;
+  font-size: 0.95rem;
+}
+
+.floating-hold-close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.floating-hold-close:hover {
+  color: var(--color-text-primary);
+}
+

@@ -11,6 +11,11 @@ import { authStore } from './modules/auth/auth.store.js';
 import { authModal } from './modules/auth/auth.modal.js';
 import { navbar } from './modules/navigation/navbar.js';
 import { router } from './modules/navigation/router.js';
+import { catalogView } from './modules/customer/catalog.view.js';
+import { eventDetailView } from './modules/customer/event-detail.view.js';
+import { myTicketsView } from './modules/customer/my-tickets.view.js';
+import { checkoutDrawer } from './modules/customer/checkout.drawer.js';
+import { eticketModal } from './modules/customer/eticket.modal.js';
 import { formatCurrencyVND } from './utils/formatters.js';
 import { $ } from './utils/dom.util.js';
 
@@ -20,20 +25,23 @@ class Application {
   }
 
   async init() {
-    console.log('[INFO] Initializing Ticketing Engine Frontend Architecture & Auth Layer...');
+    console.log('[INFO] Initializing Ticketing Engine Customer Storefront & Flash-Sale UI...');
 
-    // 1. Mount Auth Modal Dialog & Navigation Bar
+    // 1. Mount Modals, Drawers & Navigation Bar
     authModal.init();
+    checkoutDrawer.init();
+    eticketModal.init();
+    eventDetailView.init();
     navbar.init();
 
-    // 2. Initialize Client Router
-    router.init();
-
-    // 3. Restore and validate authentication session from LocalStorage
+    // 2. Restore and validate authentication session from LocalStorage
     await authStore.init();
 
-    // 4. Verify and bind UI controllers
+    // 3. Verify and bind UI controllers & EventBus listeners
     this.bindGlobalEvents();
+
+    // 4. Initialize Client Router (triggers initial route render)
+    router.init();
 
     // 5. Set ready flag for automated test runner & debugging
     this.isReady = true;
@@ -44,18 +52,38 @@ class Application {
     window.__navbar = navbar;
     window.__router = router;
     window.__httpClient = httpClient;
+    window.__catalogView = catalogView;
+    window.__eventDetailView = eventDetailView;
+    window.__myTicketsView = myTicketsView;
+    window.__checkoutDrawer = checkoutDrawer;
+    window.__eticketModal = eticketModal;
 
-    console.log('[INFO] Frontend Architecture & Auth Layer (Task 09A + 09B) Ready.');
+    console.log('[INFO] Ticketing Engine Customer Storefront & Flash-Sale Engine (Task 10) Ready.');
+  }
+
+  handleRoute(view, param) {
+    if (view === 'event' && param) {
+      eventDetailView.render(param);
+    } else if (view === 'my-orders') {
+      myTicketsView.render();
+    } else {
+      catalogView.render();
+    }
   }
 
   bindGlobalEvents() {
     // Listen for custom event triggers
     eventBus.subscribe(CONFIG.EVENTS.AUTH_STATE_CHANGED, (data) => {
       console.log('[APP EVENT] Auth state changed:', data);
+      const current = router.getCurrentRoute();
+      if (current === 'my-orders') {
+        myTicketsView.render();
+      }
     });
 
-    eventBus.subscribe(CONFIG.EVENTS.VIEW_CHANGED, ({ route }) => {
-      console.log('[APP EVENT] Active route changed to:', route);
+    eventBus.subscribe(CONFIG.EVENTS.VIEW_CHANGED, ({ route, view, param }) => {
+      console.log('[APP EVENT] Active route changed to:', route, { view, param });
+      this.handleRoute(view, param);
     });
 
     // Delegate modal close button clicks

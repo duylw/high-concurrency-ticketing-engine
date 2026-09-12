@@ -21,7 +21,11 @@ app.use(express.urlencoded({ extended: true }));
 /**
  * 2. Static Assets Serving (SPA Shell & Public Assets)
  */
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "../public"), {
+  setHeaders: (res) => {
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  }
+}));
 
 /**
  * 3. API Routes
