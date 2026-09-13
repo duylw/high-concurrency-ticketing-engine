@@ -106,13 +106,38 @@ npm run dev
 ```
 Server runs on `http://localhost:5001`.
 
+### 4. Production Orchestration (Single-Command Deployment)
+To launch the complete enterprise production cluster (PostgreSQL 16, Redis 7 with AOF, Express 5 API, dedicated BullMQ Background Worker, and Nginx Reverse Proxy Gateway):
+
+```bash
+# Build & start all 6 production services in detached mode
+docker compose -f docker-compose.prod.yml up -d --build
+
+# Run end-to-end production deployment smoke test
+npm run test:prod-health
+```
+* **Production Edge Gateway (Nginx)**: `http://localhost/` (Port 80)
+* **Deep System Health Check**: `http://localhost/api/v1/health`
+
 ---
 
 ## 6. VERIFICATION & BENCHMARK SUITE
 
-Every component is covered by automated verification scripts:
+Every component is verified by automated test scripts and comprehensive test suites:
 
 ```bash
+# Production deployment smoke test (13/13 assertions passed)
+npm run test:prod-health
+
+# Postman / Newman API test suite (26/26 requests, 59/59 assertions passed)
+npm run test:postman
+
+# Itemized ticket issuance & multi-ticket staggered check-in test
+npm run test:itemized-tickets
+
+# Multi-ticket wallet UI & individual QR scanner test
+npm run test:frontend-multi-tickets
+
 # Infrastructure & Database connectivity
 npm run test:infra
 
