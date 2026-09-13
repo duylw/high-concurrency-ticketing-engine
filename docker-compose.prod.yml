@@ -1,0 +1,123 @@
+services:
+  # ============================================================================
+  # 1. PostgreSQL 16 (Persistent Database)
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: ticketing_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_prod_password
+      POSTGRES_DB: ticketing_prod
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d ticketing_prod" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ticketing_prod_net
+
+  # ============================================================================
+  # 2. Redis 7 (Cache & Queue with AOF Persistence)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: ticketing_redis_prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ticketing_prod_net
+
+  # ============================================================================
+  # 3. Database Migration Runner (One-Shot Initialization)
+  # ============================================================================
+  migration:
+    image: ticketing-engine:prod
+    container_name: ticketing_migration_prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: [ "npx", "prisma", "db", "push" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    networks:
+      - ticketing_prod_net
+    restart: "no"
+
+  # ============================================================================
+  # 4. Express 5 API Server (Stateless HTTP Gateway)
+  # ============================================================================
+  api:
+    image: ticketing-engine:prod
+    container_name: ticketing_api_prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: [ "node", "src/server.js" ]
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    env_file:
+      - .env.production
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5001/api/v1/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ticketing_prod_net
+
+  # ============================================================================
+  # 5. Dedicated BullMQ Background Worker
+  # ============================================================================
+  worker:
+    image: ticketing-engine:prod
+    container_name: ticketing_worker_prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: [ "node", "src/worker.js" ]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    env_file:
+      - .env.production
+    networks:
+      - ticketing_prod_net
+
+# ==============================================================================
+# Persistent Volumes & Isolated Bridge Network
+# ==============================================================================
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+
+networks:
+  ticketing_prod_net:
+    driver: bridge
