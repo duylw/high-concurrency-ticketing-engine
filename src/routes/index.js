@@ -4,21 +4,15 @@ import userRoutes from "./user.route.js";
 import eventRoutes from "./event.route.js";
 import ticketRouters from "./ticket.route.js";
 import orderRouters from "./order.route.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import healthRoutes from "./health.route.js";
 
 const rootRouter = Router();
 
 /**
- * Health check endpoint
+ * System Health Check Endpoint
  * GET /api/v1/health
  */
-rootRouter.get("/health", (req, res) => {
-  return ApiResponse.success(res, "Service is healthy.", {
-    uptime: `${process.uptime().toFixed(2)}s`,
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-  });
-});
+rootRouter.use("/health", healthRoutes);
 
 /**
  * Route modules
