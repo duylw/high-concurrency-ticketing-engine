@@ -46,22 +46,12 @@ class AuthModal {
             <form id="auth-login-form">
               <div class="form-group">
                 <label class="form-label" for="login-email">Email hoặc Tên đăng nhập</label>
-                <input type="email" id="login-email" class="form-input" placeholder="buyer@ticketing.com" required autocomplete="username">
+                <input type="email" id="login-email" class="form-input" placeholder="email@example.com" required autocomplete="username">
               </div>
 
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="login-password">Mật khẩu</label>
                 <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
-              </div>
-
-              <div style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted); width: 100%;">Tài khoản thử nghiệm nhanh:</span>
-                <button type="button" class="btn btn-ghost btn-sm" id="btn-quick-buyer" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                  Khách Hàng (Buyer)
-                </button>
-                <button type="button" class="btn btn-ghost btn-sm" id="btn-quick-organizer" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                  Ban Tổ Chức (Organizer)
-                </button>
               </div>
 
               <button type="submit" class="btn btn-primary btn-block" id="btn-submit-login">
@@ -115,21 +105,6 @@ class AuthModal {
     // Tab buttons
     $('#tab-login-btn')?.addEventListener('click', () => this.switchTab('login'));
     $('#tab-register-btn')?.addEventListener('click', () => this.switchTab('register'));
-
-    // Quick fill buttons
-    $('#btn-quick-buyer')?.addEventListener('click', () => {
-      const emailEl = $('#login-email');
-      const passEl = $('#login-password');
-      if (emailEl) emailEl.value = 'buyer@ticketing.com';
-      if (passEl) passEl.value = 'Password123!';
-    });
-
-    $('#btn-quick-organizer')?.addEventListener('click', () => {
-      const emailEl = $('#login-email');
-      const passEl = $('#login-password');
-      if (emailEl) emailEl.value = 'organizer@ticketing.com';
-      if (passEl) passEl.value = 'Password123!';
-    });
 
     // Form submissions
     $('#auth-login-form')?.addEventListener('submit', (e) => this._handleLogin(e));

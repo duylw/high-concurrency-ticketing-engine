@@ -13,36 +13,50 @@ class CatalogView {
     this.container = null;
     this.events = [];
     this.searchQuery = '';
+    this.activeFilter = 'all'; // 'all' | 'live' | 'upcoming'
     this.debounceTimer = null;
   }
 
-  async render() {
+  async render(initialFilter = null) {
     this.container = $('#app');
     if (!this.container) return;
+
+    if (initialFilter) {
+      this.activeFilter = initialFilter;
+    }
 
     this.container.innerHTML = `
       <!-- Hero Banner Section -->
       <section class="section" style="padding-bottom: 2rem;">
         <div class="container text-center" style="max-width: 860px; margin: 0 auto;">
-          <div class="badge badge-brand" style="margin-bottom: 1.5rem;">
-            <span>&#x26A1;</span> Kiến Trúc High-Concurrency Flash-Sale Engine
-          </div>
-          
           <h1 style="margin-bottom: 1.25rem;">
-            Săn Vé Tốc Độ Cao <br>
-            <span class="text-gradient-brand">Không Bao Giờ Bán Lệch Kho</span>
+            Săn Vé Sự Kiện Trực Tuyến <br>
+            <span class="text-gradient-brand">Tốc Độ Cao & Công Bằng</span>
           </h1>
           
           <p class="text-lead" style="margin-bottom: 2.25rem;">
-            Hệ thống bán vé sự kiện phân tán với thời gian phản hồi sub-15ms qua Redis Cache-Aside, bảo vệ chống Double-Payment bằng Distributed Idempotency và thu hồi vé hết hạn tự động qua BullMQ.
+            Nền tảng đặt vé hòa nhạc và sự kiện trực tiếp hàng đầu. Trải nghiệm săn vé mượt mà, minh bạch và an toàn tuyệt đối.
           </p>
 
           <!-- Search Filter Bar -->
-          <div class="flex items-center justify-center" style="margin-bottom: 1rem;">
+          <div class="flex items-center justify-center" style="margin-bottom: 1.25rem;">
             <div class="search-bar-wrap">
               <span class="search-icon">&#x1F50D;</span>
               <input type="text" id="catalog-search-input" class="search-input" placeholder="Tìm kiếm sự kiện, nghệ sĩ, concert..." value="${escapeHtml(this.searchQuery)}">
             </div>
+          </div>
+
+          <!-- Event Status Filter Tabs -->
+          <div class="catalog-tabs-wrap" id="catalog-tabs-wrap">
+            <button type="button" class="catalog-tab-btn ${this.activeFilter === 'all' ? 'is-active' : ''}" data-filter="all">
+              Tất Cả Sự Kiện
+            </button>
+            <button type="button" class="catalog-tab-btn ${this.activeFilter === 'live' ? 'is-active' : ''}" data-filter="live">
+              Đang Mở Bán ⚡
+            </button>
+            <button type="button" class="catalog-tab-btn ${this.activeFilter === 'upcoming' ? 'is-active' : ''}" data-filter="upcoming">
+              Sắp Mở Bán (Lịch Countdown)
+            </button>
           </div>
         </div>
       </section>
@@ -52,8 +66,8 @@ class CatalogView {
         <div class="container">
           <div class="flex items-center justify-between" style="margin-bottom: 2rem;">
             <div>
-              <h2>Sự Kiện Nổi Bật</h2>
-              <p class="text-sm">Trải nghiệm săn vé trực tiếp được bảo vệ bởi PostgreSQL Row Lock & Redis Cache</p>
+              <h2 id="catalog-section-title">Danh Sách Sự Kiện</h2>
+              <p class="text-sm">Trải nghiệm săn vé trực tiếp được bảo vệ bởi công nghệ chống nghẽn kho phân tán</p>
             </div>
             <div id="cache-indicator-badge">
               <!-- Cache HIT / MISS indicator -->
@@ -64,7 +78,7 @@ class CatalogView {
           <div id="catalog-grid-container">
             <div class="text-center" style="padding: 3rem 0;">
               ${getSpinnerHtml('lg')}
-              <p style="color: var(--color-text-muted); margin-top: 1rem;">Đang tải danh sách sự kiện từ Redis Cache...</p>
+              <p style="color: var(--color-text-muted); margin-top: 1rem;">Đang tải danh sách sự kiện...</p>
             </div>
           </div>
         </div>
@@ -72,6 +86,7 @@ class CatalogView {
     `;
 
     this._bindSearch();
+    this._bindTabs();
     await this._loadEvents();
   }
 
@@ -85,8 +100,8 @@ class CatalogView {
         const cacheEl = $('#cache-indicator-badge');
         if (cacheEl && res.data.isFromCache !== undefined) {
           cacheEl.innerHTML = res.data.isFromCache
-            ? '<span class="badge badge-success">&#x26A1; Redis Cache HIT (&lt;3ms)</span>'
-            : '<span class="badge badge-brand">&#x1F504; PostgreSQL DB MISS</span>';
+            ? '<span class="badge badge-success">&#x26A1; Phản hồi siêu tốc (&lt;3ms)</span>'
+            : '<span class="badge badge-brand">&#x1F504; Trực tiếp từ hệ thống</span>';
         }
 
         this._renderGrid();
@@ -103,28 +118,69 @@ class CatalogView {
     }
   }
 
+  _bindTabs() {
+    const tabBtns = document.querySelectorAll('.catalog-tab-btn');
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter || 'all';
+        this.activeFilter = filter;
+        tabBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+        this._renderGrid();
+      });
+    });
+  }
+
   _renderGrid() {
     const grid = $('#catalog-grid-container');
     if (!grid) return;
 
-    // Filter events by search query
+    const now = new Date();
+
+    // Filter events by both search query and active status tab
     const filtered = this.events.filter((ev) => {
-      if (!this.searchQuery) return true;
-      const q = this.searchQuery.toLowerCase();
-      return (ev.title || '').toLowerCase().includes(q) || (ev.description || '').toLowerCase().includes(q);
+      // 1. Search Query
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        const matchTitle = (ev.title || '').toLowerCase().includes(q);
+        const matchDesc = (ev.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
+      }
+
+      // 2. Status Tab Filter
+      const saleStart = ev.saleStartTime ? new Date(ev.saleStartTime) : null;
+      const saleEnd = ev.saleEndTime ? new Date(ev.saleEndTime) : null;
+      const isUpcoming = saleStart && now < saleStart;
+      const isClosed = saleEnd && now > saleEnd;
+      const isLive = !isUpcoming && !isClosed;
+
+      if (this.activeFilter === 'live') {
+        return isLive;
+      }
+      if (this.activeFilter === 'upcoming') {
+        return isUpcoming;
+      }
+      return true;
     });
 
     if (filtered.length === 0) {
+      let emptyMsg = 'Không tìm thấy sự kiện nào';
+      let emptySub = 'Hãy thử tìm kiếm với từ khóa khác.';
+      if (this.activeFilter === 'upcoming') {
+        emptyMsg = 'Chưa có sự kiện nào sắp mở bán';
+        emptySub = 'Tất cả các sự kiện hiện tại đều đã bắt đầu mở bán hoặc đã hoàn tất.';
+      } else if (this.activeFilter === 'live') {
+        emptyMsg = 'Hiện không có sự kiện nào đang mở bán';
+        emptySub = 'Vui lòng kiểm tra tab Sắp Mở Bán để theo dõi lịch mở bán kế tiếp.';
+      }
+
       grid.innerHTML = `
         <div class="glass-card text-center" style="padding: 4rem 2rem;">
-          <h3 style="color: var(--color-text-secondary); margin-bottom: 0.5rem;">Không tìm thấy sự kiện nào</h3>
-          <p style="color: var(--color-text-muted); font-size: 0.9375rem;">Hãy thử tìm kiếm với từ khóa khác.</p>
+          <h3 style="color: var(--color-text-secondary); margin-bottom: 0.5rem;">${emptyMsg}</h3>
+          <p style="color: var(--color-text-muted); font-size: 0.9375rem;">${emptySub}</p>
         </div>
       `;
       return;
     }
-
-    const now = new Date();
 
     grid.innerHTML = `
       <div class="grid grid-cols-3" style="gap: 1.75rem;">

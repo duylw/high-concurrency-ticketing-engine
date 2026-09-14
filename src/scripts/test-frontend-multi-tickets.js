@@ -79,6 +79,7 @@ const runMultiTicketTests = async () => {
     let testTier = await prismaClient.ticketTier.findFirst({
       where: {
         totalStock: { gt: 10 },
+        availableStock: { gte: 2 },
         event: {
           organizerId: orgUser.id,
           status: "PUBLISHED",

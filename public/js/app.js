@@ -77,8 +77,10 @@ class Application {
       organizerStudioView.render();
     } else if (view === 'gate-scanner') {
       gateScannerView.render(param);
+    } else if (view === 'schedule') {
+      catalogView.render('upcoming');
     } else {
-      catalogView.render();
+      catalogView.render('all');
     }
   }
 

@@ -25,6 +25,7 @@
     "test:itemized-tickets": "node src/scripts/test-itemized-tickets.js",
     "test:frontend-multi-tickets": "node src/scripts/test-frontend-multi-tickets.js",
     "test:real-qr": "node src/scripts/test-real-qr-scanner.js",
+    "test:ui-cleanup": "node src/scripts/test-production-ui-cleanup.js",
     "test:postman": "npx --yes newman run docs/postman_collection.json",
     "test:prod-health": "node src/scripts/test-prod-health.js",
     "benchmark:read": "node src/scripts/benchmark-read.js",
