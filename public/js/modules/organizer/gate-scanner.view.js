@@ -120,6 +120,14 @@ export class GateScannerView {
     this.mediaStream = null;
     this.isCameraActive = false;
     this.scanInterval = null;
+    this.lastScanTime = 0;
+    this.isProcessing = false;
+    this.canvas = null;
+    this.canvasCtx = null;
+    this._boundOnPaste = null;
+    this._boundOnDragOver = null;
+    this._boundOnDragLeave = null;
+    this._boundOnDrop = null;
   }
 
   async render(eventId = null) {
@@ -128,6 +136,7 @@ export class GateScannerView {
 
     this.currentEventId = eventId;
     this.stopCamera();
+    this._unbindEvents();
 
     // 1. Role Guard: Organizer or Admin only
     if (!authStore.isAuthenticated) {
@@ -230,13 +239,16 @@ export class GateScannerView {
                 
                 <div class="scanner-reticle">
                   <div class="scanner-reticle-corners"></div>
-                  <div id="camera-idle-placeholder" style="text-align: center; color: var(--color-text-muted); font-size: 0.8125rem; padding: 1rem;">
+                  <div id="camera-idle-placeholder" style="text-align: center; color: var(--color-text-muted); font-size: 0.8125rem; padding: 1rem; pointer-events: none;">
                     <div style="font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
                     <div>Camera đang tắt</div>
-                    <div style="font-size: 0.75rem; opacity: 0.7;">Bấm "Bật Camera" hoặc nhập mã vé bên dưới</div>
+                    <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">Bật camera, tải ảnh hoặc nhấn Ctrl + V để soát vé</div>
                   </div>
                 </div>
               </div>
+
+              <!-- Hidden File Input for QR Image Upload -->
+              <input type="file" id="scanner-file-input" accept="image/*" style="display: none;" />
 
               <!-- Manual / Barcode Input Form -->
               <form id="scanner-input-form" onsubmit="return false;">
@@ -258,9 +270,16 @@ export class GateScannerView {
                 <button type="button" class="btn btn-ghost btn-sm" id="btn-toggle-camera">
                   Bật Camera Quét QR
                 </button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-upload-qr">
+                  Tải Ảnh QR
+                </button>
                 <button type="button" class="btn btn-ghost btn-sm" id="btn-paste-clipboard">
                   Dán Từ Clipboard
                 </button>
+              </div>
+
+              <div class="scanner-multi-hint">
+                <span>Mẹo: Bạn có thể nhấn <kbd>Ctrl</kbd> + <kbd>V</kbd> để dán ảnh QR / mã vé từ Clipboard hoặc kéo thả ảnh vé trực tiếp vào khung camera.</span>
               </div>
             </div>
 
@@ -326,12 +345,33 @@ export class GateScannerView {
     `;
   }
 
+  _unbindEvents() {
+    if (this._boundOnPaste) {
+      window.removeEventListener('paste', this._boundOnPaste);
+      this._boundOnPaste = null;
+    }
+    const viewport = document.getElementById('scanner-viewport-root');
+    if (viewport) {
+      if (this._boundOnDragOver) viewport.removeEventListener('dragover', this._boundOnDragOver);
+      if (this._boundOnDragLeave) viewport.removeEventListener('dragleave', this._boundOnDragLeave);
+      if (this._boundOnDrop) viewport.removeEventListener('drop', this._boundOnDrop);
+    }
+    this._boundOnDragOver = null;
+    this._boundOnDragLeave = null;
+    this._boundOnDrop = null;
+  }
+
   _bindEvents() {
+    this._unbindEvents();
+
     const form = document.getElementById('scanner-input-form');
     const input = document.getElementById('scanner-ticket-input');
     const btnCamera = document.getElementById('btn-toggle-camera');
+    const btnUpload = document.getElementById('btn-upload-qr');
+    const fileInput = document.getElementById('scanner-file-input');
     const btnPaste = document.getElementById('btn-paste-clipboard');
     const btnLoginGuard = document.getElementById('btn-login-scanner-guard');
+    const viewport = document.getElementById('scanner-viewport-root');
 
     if (btnLoginGuard) {
       btnLoginGuard.addEventListener('click', () => {
@@ -353,31 +393,106 @@ export class GateScannerView {
       btnCamera.addEventListener('click', () => {
         if (this.isCameraActive) {
           this.stopCamera();
-          btnCamera.textContent = 'Bật Camera Quét QR';
         } else {
           this.startCamera();
-          btnCamera.textContent = 'Tắt Camera';
         }
       });
     }
 
-    if (btnPaste && input) {
-      btnPaste.addEventListener('click', async () => {
-        try {
-          if (navigator.clipboard?.readText) {
-            const text = await navigator.clipboard.readText();
-            if (text) {
-              input.value = text;
-              this.processInput(text);
-            }
-          } else {
-            toast.info('Trình duyệt không hỗ trợ đọc clipboard tự động. Vui lòng dán thủ công.');
-          }
-        } catch (e) {
-          toast.info('Hãy dán mã vé (Ctrl+V) vào ô nhập.');
+    // Channel 2: File Upload
+    if (btnUpload && fileInput) {
+      btnUpload.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          this._decodeImageFile(file);
+          e.target.value = '';
         }
       });
     }
+
+    // Channel 3: Clipboard Button
+    if (btnPaste) {
+      btnPaste.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard?.read) {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+              const imageType = item.types.find((t) => t.startsWith('image/'));
+              if (imageType) {
+                const blob = await item.getType(imageType);
+                this._decodeImageFile(blob);
+                return;
+              }
+            }
+          }
+          if (navigator.clipboard?.readText) {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              if (input) input.value = text;
+              this.processInput(text);
+              return;
+            }
+          }
+          toast.info('Hãy dùng phím tắt Ctrl + V để dán ảnh QR hoặc mã vé.');
+        } catch (e) {
+          toast.info('Hãy nhấn Ctrl + V để dán trực tiếp vào màn hình.');
+        }
+      });
+    }
+
+    // Drag and Drop Image on Viewport
+    if (viewport) {
+      this._boundOnDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        viewport.classList.add('is-dragover');
+      };
+      this._boundOnDragLeave = (e) => {
+        e.preventDefault();
+        viewport.classList.remove('is-dragover');
+      };
+      this._boundOnDrop = (e) => {
+        e.preventDefault();
+        viewport.classList.remove('is-dragover');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          this._decodeImageFile(file);
+        }
+      };
+
+      viewport.addEventListener('dragover', this._boundOnDragOver);
+      viewport.addEventListener('dragleave', this._boundOnDragLeave);
+      viewport.addEventListener('drop', this._boundOnDrop);
+    }
+
+    // Global Paste Listener (Ctrl + V)
+    this._boundOnPaste = (e) => {
+      const items = e.clipboardData?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          if (blob) {
+            e.preventDefault();
+            this._decodeImageFile(blob);
+            return;
+          }
+        }
+      }
+
+      if (document.activeElement !== input) {
+        const text = e.clipboardData?.getData('text');
+        if (text && (text.startsWith('TKT-') || text.startsWith('{') || text.includes('-'))) {
+          e.preventDefault();
+          if (input) input.value = text;
+          this.processInput(text);
+        }
+      }
+    };
+    window.addEventListener('paste', this._boundOnPaste);
 
     // Auto-focus input for physical barcode laser guns
     if (input) {
@@ -386,10 +501,11 @@ export class GateScannerView {
   }
 
   /**
-   * Process raw input from either camera QR payload or manual text
+   * Process raw input from camera, uploaded image, clipboard, or manual text
    */
   processInput(rawInput) {
     if (!rawInput) return;
+    if (this.isProcessing) return;
     let orderId = rawInput.trim();
 
     // 1. Check if rawInput is JSON string from QR Code payload
@@ -428,6 +544,7 @@ export class GateScannerView {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
+      this.isProcessing = true;
       const response = await httpClient.post(`/orders/${orderId}/check-in`);
       const order = response.data?.order || response.data;
 
@@ -539,6 +656,7 @@ export class GateScannerView {
         });
       }
     } finally {
+      this.isProcessing = false;
       if (submitBtn) submitBtn.disabled = false;
       if (input) input.focus();
     }
@@ -607,13 +725,82 @@ export class GateScannerView {
     }
   }
 
+  _triggerDetectFlash() {
+    const laser = document.getElementById('scanner-laser-line');
+    const reticle = document.querySelector('.scanner-reticle');
+    if (laser) laser.classList.add('is-detected');
+    if (reticle) reticle.classList.add('is-detected');
+
+    setTimeout(() => {
+      if (laser) laser.classList.remove('is-detected');
+      if (reticle) reticle.classList.remove('is-detected');
+    }, 450);
+  }
+
+  async _decodeImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      toast.info('Vui lòng chọn hoặc dán tệp định dạng hình ảnh (PNG, JPG, WebP).');
+      return;
+    }
+
+    try {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const decoded = this._decodeImageElement(img);
+        if (decoded) {
+          this._triggerDetectFlash();
+          this.processInput(decoded);
+        } else {
+          toast.info('Không phát hiện mã QR hợp lệ trong hình ảnh đã chọn.');
+          this.soundFx.playWarning();
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        toast.info('Không thể đọc file hình ảnh.');
+      };
+      img.src = objectUrl;
+    } catch (err) {
+      console.warn('[SCANNER] Error decoding image file:', err);
+      toast.info('Lỗi xử lý file hình ảnh.');
+    }
+  }
+
+  _decodeImageElement(img) {
+    if (!this.canvas) {
+      this.canvas = document.createElement('canvas');
+      this.canvasCtx = this.canvas.getContext('2d', { willReadFrequently: true });
+    }
+    const canvas = this.canvas;
+    const ctx = this.canvasCtx;
+
+    canvas.width = img.naturalWidth || img.width || 640;
+    canvas.height = img.naturalHeight || img.height || 480;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const jsQR = window.jsQR || globalThis.jsQR;
+    if (typeof jsQR === 'function') {
+      const code = jsQR(imgData.data, imgData.width, imgData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+      if (code && code.data) {
+        return code.data;
+      }
+    }
+    return null;
+  }
+
   async startCamera() {
     const video = document.getElementById('scanner-camera-feed');
     const laser = document.getElementById('scanner-laser-line');
     const placeholder = document.getElementById('camera-idle-placeholder');
+    const btnCamera = document.getElementById('btn-toggle-camera');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast.info('Trình duyệt không hỗ trợ Camera API. Vui lòng nhập mã vé thủ công.');
+      toast.info('Trình duyệt không hỗ trợ Camera API. Vui lòng tải ảnh QR hoặc nhập mã thủ công.');
       return;
     }
 
@@ -630,27 +817,78 @@ export class GateScannerView {
 
       if (laser) laser.classList.add('is-active');
       if (placeholder) placeholder.style.display = 'none';
+      if (btnCamera) btnCamera.textContent = 'Tắt Camera';
       this.isCameraActive = true;
 
-      // If native BarcodeDetector is available in browser
-      if ('BarcodeDetector' in window) {
-        const barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
-        this.scanInterval = setInterval(async () => {
-          if (!this.isCameraActive || !video || video.readyState < 2) return;
-          try {
-            const barcodes = await barcodeDetector.detect(video);
-            if (barcodes && barcodes.length > 0) {
-              const rawValue = barcodes[0].rawValue;
-              if (rawValue) {
-                this.processInput(rawValue);
-              }
-            }
-          } catch (detErr) {}
-        }, 500);
+      // Ensure canvas initialized for frame capture
+      if (!this.canvas) {
+        this.canvas = document.createElement('canvas');
+        this.canvasCtx = this.canvas.getContext('2d', { willReadFrequently: true });
       }
+
+      // Check if native BarcodeDetector is available AND supports qr_code
+      let nativeDetector = null;
+      if ('BarcodeDetector' in window) {
+        try {
+          const formats = await window.BarcodeDetector.getSupportedFormats?.();
+          if (formats && formats.includes('qr_code')) {
+            nativeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
+          }
+        } catch (e) {
+          nativeDetector = null;
+        }
+      }
+
+      // High-performance scanner loop (every 180ms)
+      this.scanInterval = setInterval(async () => {
+        if (!this.isCameraActive || !video || video.readyState < 2) return;
+        if (this.isProcessing) return;
+
+        // Anti-flood debounce: at least 2.5s between scans
+        if (Date.now() - this.lastScanTime < 2500) return;
+
+        let detectedValue = null;
+
+        // 1. Try native BarcodeDetector first
+        if (nativeDetector) {
+          try {
+            const barcodes = await nativeDetector.detect(video);
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              detectedValue = barcodes[0].rawValue;
+            }
+          } catch (e) {}
+        }
+
+        // 2. Fallback to Canvas 2D + jsQR (Standard ISO/IEC 18004 decoder)
+        if (!detectedValue) {
+          const jsQR = window.jsQR || globalThis.jsQR;
+          if (typeof jsQR === 'function' && this.canvas && this.canvasCtx) {
+            const vw = video.videoWidth || 640;
+            const vh = video.videoHeight || 480;
+            if (this.canvas.width !== vw || this.canvas.height !== vh) {
+              this.canvas.width = vw;
+              this.canvas.height = vh;
+            }
+            this.canvasCtx.drawImage(video, 0, 0, vw, vh);
+            const imgData = this.canvasCtx.getImageData(0, 0, vw, vh);
+            const code = jsQR(imgData.data, imgData.width, imgData.height, {
+              inversionAttempts: 'dontInvert',
+            });
+            if (code && code.data) {
+              detectedValue = code.data;
+            }
+          }
+        }
+
+        if (detectedValue) {
+          this.lastScanTime = Date.now();
+          this._triggerDetectFlash();
+          this.processInput(detectedValue);
+        }
+      }, 180);
     } catch (err) {
       console.warn('[CAMERA] Cannot access camera:', err);
-      toast.info('Không thể truy cập camera. Vui lòng cấp quyền hoặc nhập mã thủ công.');
+      toast.info('Không thể truy cập camera. Vui lòng cấp quyền hoặc tải ảnh QR lên.');
       this.stopCamera();
     }
   }
@@ -669,13 +907,18 @@ export class GateScannerView {
     const video = document.getElementById('scanner-camera-feed');
     const laser = document.getElementById('scanner-laser-line');
     const placeholder = document.getElementById('camera-idle-placeholder');
+    const btnCamera = document.getElementById('btn-toggle-camera');
 
     if (video) {
       video.classList.remove('is-active');
       video.srcObject = null;
     }
-    if (laser) laser.classList.remove('is-active');
+    if (laser) {
+      laser.classList.remove('is-active');
+      laser.classList.remove('is-detected');
+    }
     if (placeholder) placeholder.style.display = 'block';
+    if (btnCamera) btnCamera.textContent = 'Bật Camera Quét QR';
   }
 }
 
