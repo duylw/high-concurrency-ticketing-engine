@@ -1,6 +1,9 @@
 import { config } from "dotenv";
 config();
 
+import qrcode from "qrcode-generator";
+globalThis.qrcode = qrcode;
+
 import { generateQrSvg } from "../../public/js/utils/qrcode.util.js";
 import { eventsApi } from "../../public/js/modules/events/events.api.js";
 import { ordersApi } from "../../public/js/modules/orders/orders.api.js";

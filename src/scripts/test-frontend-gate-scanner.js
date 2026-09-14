@@ -66,7 +66,7 @@ const runGateScannerTests = async () => {
     // Fetch an event owned by this organizer with active ticket tiers
     const myEventsRes = await organizerApi.getMyEvents();
     const myEvents = Array.isArray(myEventsRes.data) ? myEventsRes.data : (myEventsRes.data?.events || []);
-    let targetEvent = myEvents.find(e => e.status === "PUBLISHED" && e.ticketTiers && e.ticketTiers.length > 0);
+    let targetEvent = myEvents.find(e => e.status === "PUBLISHED" && e.ticketTiers?.some(t => (t.availableStock ?? t.totalStock) > 0));
 
     if (!targetEvent) {
       // Create a dedicated event for scanner testing if none available
@@ -89,7 +89,7 @@ const runGateScannerTests = async () => {
       targetEvent.ticketTiers = [newTier.data];
     }
 
-    const testTier = targetEvent.ticketTiers[0];
+    const testTier = targetEvent.ticketTiers.find(t => (t.availableStock ?? t.totalStock) > 0) || targetEvent.ticketTiers[0];
     console.log(`[INFO] Testing with Event: "${targetEvent.title}"`);
     console.log(`       Tier: "${testTier.name}" (ID: ${testTier.id})`);
     console.log(`[PASSED] Test event and tier verified.`);

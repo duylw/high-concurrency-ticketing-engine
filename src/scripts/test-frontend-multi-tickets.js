@@ -75,10 +75,16 @@ const runMultiTicketTests = async () => {
     // ----------------------------------------------------
     logStep(3, "Find or Create Test Event & Ticket Tier with Stock");
 
+    const now = new Date();
     let testTier = await prismaClient.ticketTier.findFirst({
       where: {
         totalStock: { gt: 10 },
-        event: { organizerId: orgUser.id, status: "PUBLISHED" },
+        event: {
+          organizerId: orgUser.id,
+          status: "PUBLISHED",
+          saleStartTime: { lte: now },
+          saleEndTime: { gt: now },
+        },
       },
       include: { event: true },
     });
