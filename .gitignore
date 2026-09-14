@@ -41,4 +41,6 @@ terraform/.terraform/
 *.tfvars
 *.tfvars.json
 *.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
 crash.log
