@@ -33,7 +33,7 @@ RUN apk add --no-cache openssl libc6-compat dumb-init
 
 # Create non-root system group and user for security compliance
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs
+  adduser -S nodejs -u 1001 -G nodejs
 
 # Copy pruned node_modules (containing compiled Prisma client) from builder
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
@@ -46,7 +46,7 @@ COPY --chown=nodejs:nodejs public ./public
 
 # Set default production environment variables
 ENV NODE_ENV=production \
-    PORT=5001
+  PORT=5001
 
 # Enforce non-root execution
 USER nodejs

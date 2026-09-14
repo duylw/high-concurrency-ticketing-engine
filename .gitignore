@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Environment variables
 .env
@@ -33,7 +32,13 @@ docs/
 dist/
 
 
-/src/generated/prisma
-
-
 # Agent & Plans
+
+# Terraform & Secrets
+terraform/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.pem
+crash.log
