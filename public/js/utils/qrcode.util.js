@@ -1,101 +1,58 @@
 /**
- * Zero-Dependency SVG QR Code Generator
- * Generates clean, scalable SVG QR Code markup from text or JSON payloads
+ * Standard ISO/IEC 18004 SVG QR Code Generator
+ * Generates clean, scalable, valid QR Code vector SVG markup conforming to ISO/IEC 18004
+ * Supports Reed-Solomon Error Correction Level M (15% error correction capacity)
  */
 
-// Byte mode QR code generator for standard payloads
-export const generateQrSvg = (text, size = 200) => {
-  // Simple, deterministic matrix generation for QR Code visualization
-  // Uses a 29x29 matrix (QR Version 3) with standard position detection patterns
-  const matrixSize = 29;
-  const matrix = Array.from({ length: matrixSize }, () => Array(matrixSize).fill(0));
+/**
+ * Generate standard vector SVG QR Code
+ * @param {string|object} payload - Text or JSON payload to encode
+ * @param {number} size - Visual width/height in pixels (default: 200)
+ * @returns {string} SVG HTML markup
+ */
+export const generateQrSvg = (payload, size = 200) => {
+  const text = typeof payload === 'object' ? JSON.stringify(payload) : String(payload || '');
 
-  // 1. Draw Position Detection Patterns (Top-Left, Top-Right, Bottom-Left)
-  const drawFinderPattern = (row, col) => {
-    for (let r = -1; r <= 7; r++) {
-      for (let c = -1; c <= 7; c++) {
-        const currR = row + r;
-        const currC = col + c;
-        if (currR >= 0 && currR < matrixSize && currC >= 0 && currC < matrixSize) {
-          if (
-            (r >= 0 && r <= 6 && (c === 0 || c === 6)) ||
-            (c >= 0 && c <= 6 && (r === 0 || r === 6)) ||
-            (r >= 2 && r <= 4 && c >= 2 && c <= 4)
-          ) {
-            matrix[currR][currC] = 1;
-          } else {
-            matrix[currR][currC] = 0;
-          }
+  try {
+    const qrcodeFn = typeof window !== 'undefined' ? window.qrcode : (typeof globalThis !== 'undefined' ? globalThis.qrcode : null);
+    if (typeof qrcodeFn !== 'function') {
+      throw new Error('QR generator library (qrcode-generator) not loaded');
+    }
+
+    // TypeNumber: 0 (auto-detect version 1..40 based on payload length)
+    // ErrorCorrectionLevel: 'M' (15% redundancy for fast, fault-tolerant scanning)
+    const qr = qrcodeFn(0, 'M');
+    qr.addData(text);
+    qr.make();
+
+    const moduleCount = qr.getModuleCount();
+    const margin = 4; // Standard ISO 4-module quiet zone
+    const cellSize = 10;
+    const totalModules = moduleCount + margin * 2;
+    const svgSize = totalModules * cellSize;
+
+    let pathD = '';
+    for (let r = 0; r < moduleCount; r++) {
+      for (let c = 0; c < moduleCount; c++) {
+        if (qr.isDark(r, c)) {
+          const x = (c + margin) * cellSize;
+          const y = (r + margin) * cellSize;
+          pathD += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z `;
         }
       }
     }
-  };
 
-  drawFinderPattern(0, 0);
-  drawFinderPattern(0, matrixSize - 7);
-  drawFinderPattern(matrixSize - 7, 0);
-
-  // 2. Draw Timing Patterns
-  for (let i = 8; i < matrixSize - 8; i++) {
-    matrix[6][i] = i % 2 === 0 ? 1 : 0;
-    matrix[i][6] = i % 2 === 0 ? 1 : 0;
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgSize} ${svgSize}" width="${size}" height="${size}" class="qr-code-svg" style="border-radius: 12px; background: #FFFFFF; padding: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); display: block; margin: 0 auto;">
+        <path d="${pathD.trim()}" fill="#0F172A" shape-rendering="crispEdges" />
+      </svg>
+    `.trim();
+  } catch (err) {
+    console.error('[QR] Failed to generate ISO QR code:', err);
+    return `
+      <div style="width: ${size}px; height: ${size}px; background: #FFF; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #EF4444; font-size: 0.75rem;">
+        Lỗi tạo mã QR
+      </div>
+    `;
   }
-
-  // 3. Draw Alignment Pattern (at 20, 20)
-  const alignR = 20;
-  const alignC = 20;
-  for (let r = -2; r <= 2; r++) {
-    for (let c = -2; c <= 2; c++) {
-      if (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0)) {
-        matrix[alignR + r][alignC + c] = 1;
-      } else {
-        matrix[alignR + r][alignC + c] = 0;
-      }
-    }
-  }
-
-  // 4. Encode Payload into pseudo-random deterministic data bits
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-
-  let bitIdx = 0;
-  for (let r = 0; r < matrixSize; r++) {
-    for (let c = 0; c < matrixSize; c++) {
-      // Skip finder and timing patterns
-      const inFinderTL = r <= 7 && c <= 7;
-      const inFinderTR = r <= 7 && c >= matrixSize - 8;
-      const inFinderBL = r >= matrixSize - 8 && c <= 7;
-      const inTiming = r === 6 || c === 6;
-      const inAlign = Math.abs(r - alignR) <= 2 && Math.abs(c - alignC) <= 2;
-
-      if (!inFinderTL && !inFinderTR && !inFinderBL && !inTiming && !inAlign) {
-        const charCode = text.charCodeAt(bitIdx % text.length) || 0;
-        const bit = ((charCode ^ (r * matrixSize + c) ^ hash) >> (bitIdx % 8)) & 1;
-        matrix[r][c] = bit;
-        bitIdx++;
-      }
-    }
-  }
-
-  // 5. Build Scalable SVG Path
-  const moduleSize = 10;
-  const svgSize = matrixSize * moduleSize;
-  let pathD = '';
-
-  for (let r = 0; r < matrixSize; r++) {
-    for (let c = 0; c < matrixSize; c++) {
-      if (matrix[r][c] === 1) {
-        pathD += `M${c * moduleSize},${r * moduleSize}h${moduleSize}v${moduleSize}h-${moduleSize}z `;
-      }
-    }
-  }
-
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgSize} ${svgSize}" width="${size}" height="${size}" class="qr-code-svg" style="border-radius: 8px; background: #FFFFFF; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-      <path d="${pathD}" fill="#0F172A" />
-    </svg>
-  `.trim();
 };

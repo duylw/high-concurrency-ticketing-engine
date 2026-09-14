@@ -120,7 +120,10 @@ class EticketModal {
       });
     }
 
-    const qrSvg = generateQrSvg(qrPayload, 190);
+    // High-contrast, low-density QR code: encode ticketCode (TKT-... or UUID) instead of 350-byte JSON
+    // Produces a Version 2/3 (25x25) matrix with large modules for lightning-fast scan on all webcams & phones
+    const qrData = ticketCode || qrPayload || orderId;
+    const qrSvg = generateQrSvg(qrData, 190);
 
     // Multi-ticket tab navigator markup
     let tabsMarkup = '';
