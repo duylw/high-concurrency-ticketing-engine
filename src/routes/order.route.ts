@@ -2,7 +2,10 @@ import { Router } from "express";
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
-import { orderCheckoutSchema, orderIdParamSchema, checkInParamSchema } from "../validations/order.validation.js";
+import {
+  orderCheckoutSchema,
+  checkInParamSchema,
+} from "../validations/order.validation.js";
 import { holdTicketSchema } from "../validations/ticket.validation.js";
 import { idempotencyMiddleware } from "../middlewares/idempotency.middleware.js";
 import * as orderController from "../controllers/order.controller.js";
@@ -16,10 +19,10 @@ const router = Router();
  * @access  Private
  */
 router.post(
-    "/hold",
-    authenticateToken,
-    validate(holdTicketSchema),
-    ticketController.holdTicket
+  "/hold",
+  authenticateToken,
+  validate(holdTicketSchema),
+  ticketController.holdTicket
 );
 
 /**
@@ -27,11 +30,7 @@ router.post(
  * @desc    Get user's purchased tickets & orders with QR payloads
  * @access  Private (USER, ORGANIZER, ADMIN)
  */
-router.get(
-    "/my-orders",
-    authenticateToken,
-    orderController.getMyOrders
-);
+router.get("/my-orders", authenticateToken, orderController.getMyOrders);
 
 /**
  * @route   POST /api/v1/orders/:id/checkout
@@ -39,11 +38,11 @@ router.get(
  * @access  Private (Owner only)
  */
 router.post(
-    "/:id/checkout",
-    authenticateToken,
-    idempotencyMiddleware,
-    validate(orderCheckoutSchema),
-    orderController.checkoutController
+  "/:id/checkout",
+  authenticateToken,
+  idempotencyMiddleware,
+  validate(orderCheckoutSchema),
+  orderController.checkoutController
 );
 
 /**
@@ -52,11 +51,11 @@ router.post(
  * @access  Private (ORGANIZER, ADMIN)
  */
 router.post(
-    "/:id/check-in",
-    authenticateToken,
-    authorizeRoles("ORGANIZER", "ADMIN"),
-    validate(checkInParamSchema),
-    orderController.checkInOrder
+  "/:id/check-in",
+  authenticateToken,
+  authorizeRoles("ORGANIZER", "ADMIN"),
+  validate(checkInParamSchema),
+  orderController.checkInOrder
 );
 
 export default router;

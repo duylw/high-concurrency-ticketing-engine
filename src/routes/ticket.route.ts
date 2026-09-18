@@ -10,18 +10,18 @@ import * as orderController from "../controllers/order.controller.js";
 const router = Router();
 
 router.post(
-    "/hold",
-    authenticateToken,
-    validate(holdTicketSchema),
-    ticketController.holdTicket
+  "/hold",
+  authenticateToken,
+  validate(holdTicketSchema),
+  ticketController.holdTicket
 );
 
 router.post(
-    "/:id/check-in",
-    authenticateToken,
-    authorizeRoles("ORGANIZER", "ADMIN"),
-    validate(checkInParamSchema),
-    orderController.checkInOrder
+  "/:id/check-in",
+  authenticateToken,
+  authorizeRoles("ORGANIZER", "ADMIN"),
+  validate(checkInParamSchema),
+  orderController.checkInOrder
 );
 
 export default router;

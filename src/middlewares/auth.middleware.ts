@@ -1,12 +1,18 @@
+import { Request, Response, NextFunction } from "express";
 import { UnauthorizedError, ForbiddenError } from "../errors/AppError.js";
 import { verifyAccessToken } from "../utils/jwt.util.js";
 import { prismaClient } from "../config/db.js";
+import { Role } from "../types/auth.type.js";
 
 /**
  * Authentication Middleware
  * Verifies the Bearer Access Token from request headers and attaches the user to req.user
  */
-export const authenticateToken = async (req, res, next) => {
+export const authenticateToken = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -22,7 +28,7 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // 3. Verify token and decode payload (jwt.util handles signature & expiration)
-    const decoded = verifyAccessToken(token);
+    const decoded = verifyAccessToken(token) as { id: string };
 
     // 4. Verify that user still exists in Database and is active
     const currentUser = await prismaClient.user.findUnique({
@@ -45,7 +51,12 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // 5. Grant access: attach user to request object
-    req.user = currentUser;
+    req.user = {
+      id: currentUser.id,
+      email: currentUser.email,
+      username: currentUser.username,
+      role: currentUser.role as Role,
+    };
     next();
   } catch (error) {
     next(error);

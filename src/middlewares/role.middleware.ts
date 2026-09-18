@@ -1,14 +1,13 @@
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { ForbiddenError, UnauthorizedError } from "../errors/AppError.js";
+import { Role } from "../types/auth.type.js";
 
 /**
  * Role-Based Access Control (RBAC) Authorization Middleware
  * Restricts route access to users with specified roles.
- *
- * @param {...string} allowedRoles - List of authorized roles (e.g., 'ADMIN', 'MODERATOR')
- * @returns {Function} Express middleware handler
  */
-export const authorizeRoles = (...allowedRoles) => {
-  return (req, res, next) => {
+export const authorizeRoles = (...allowedRoles: Role[]): RequestHandler => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     // 1. Ensure user is authenticated first
     if (!req.user) {
       return next(new UnauthorizedError("Authentication required before authorization."));

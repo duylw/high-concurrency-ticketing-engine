@@ -12,10 +12,11 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args) => redisClient.call(...args),
+    sendCommand: ((...args: string[]) =>
+      (redisClient.call as (...a: string[]) => Promise<unknown>)(...args)) as never,
     prefix: "rl:auth:",
   }),
-  handler: (req, res) => {
+  handler: (_req, res) => {
     return res.status(429).json({
       success: false,
       message: "Too many authentication attempts. Please try again after 15 minutes.",

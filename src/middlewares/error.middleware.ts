@@ -1,10 +1,18 @@
-import { HttpStatus } from "../constants/httpStatus.js";
+import { Request, Response, NextFunction } from "express";
+import { HttpStatus, HttpStatusCode } from "../constants/httpStatus.js";
 import { AppError } from "../errors/AppError.js";
+
+interface PrismaErrorLike {
+  code?: string;
+  meta?: {
+    target?: string[];
+  };
+}
 
 /**
  * Handles Prisma-specific database errors and transforms them into AppError
  */
-const handlePrismaError = (err) => {
+const handlePrismaError = (err: PrismaErrorLike): AppError => {
   // P2002: Unique constraint failed (e.g., duplicate email / username)
   if (err.code === "P2002") {
     const targetFields = err.meta?.target ? err.meta.target.join(", ") : "field";
@@ -27,16 +35,22 @@ const handlePrismaError = (err) => {
 /**
  * Handles JWT Token verification errors
  */
-const handleJWTError = () => new AppError("Invalid token. Please log in again.", HttpStatus.UNAUTHORIZED);
+const handleJWTError = (): AppError =>
+  new AppError("Invalid token. Please log in again.", HttpStatus.UNAUTHORIZED);
 
-const handleJWTExpiredError = () =>
+const handleJWTExpiredError = (): AppError =>
   new AppError("Your session has expired. Please log in again.", HttpStatus.UNAUTHORIZED);
 
 /**
  * Global Error Handling Middleware
  */
-export const errorHandler = (err, req, res, next) => {
-  let error = err;
+export const errorHandler = (
+  err: Error & { statusCode?: HttpStatusCode; errors?: unknown; code?: string },
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): Response => {
+  let error: AppError | (Error & { statusCode?: HttpStatusCode; errors?: unknown }) = err;
 
   // 1. Transform Prisma Errors
   if (err.code && err.code.startsWith("P")) {
@@ -52,16 +66,21 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // 3. Set default status and code for unhandled errors
-  const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+  const statusCode = (error as AppError).statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
   const message = error.message || "Internal Server Error";
   const isDevelopment = process.env.NODE_ENV === "development";
 
   // 4. Response structure
-  const response = {
+  const response: {
+    success: boolean;
+    message: string;
+    errors?: unknown;
+    stack?: string;
+  } = {
     success: false,
     message,
-    ...(error.errors && { errors: error.errors }),
-    ...(isDevelopment && { stack: err.stack }), // Only include stack trace in development
+    ...(error.errors ? { errors: error.errors } : {}),
+    ...(isDevelopment && err.stack ? { stack: err.stack } : {}),
   };
 
   // 5. Log error to console in development or if it's a 500 bug

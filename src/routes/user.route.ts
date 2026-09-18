@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { authenticateToken } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
 import { catchAsync } from "../utils/catchAsync.js";
@@ -17,7 +17,7 @@ router.get(
   "/",
   authenticateToken,
   authorizeRoles("ADMIN", "MODERATOR"),
-  catchAsync(async (req, res) => {
+  catchAsync(async (_req: Request, res: Response) => {
     const users = await prismaClient.user.findMany({
       select: {
         id: true,
@@ -48,8 +48,8 @@ router.get(
   "/:id",
   authenticateToken,
   authorizeRoles("ADMIN"),
-  catchAsync(async (req, res) => {
-    const { id } = req.params;
+  catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id as string;
 
     const user = await prismaClient.user.findUnique({
       where: { id },
