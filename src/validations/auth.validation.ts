@@ -27,25 +27,27 @@ export const registerSchema = z.object({
   }),
 });
 
+export type RegisterInput = z.infer<typeof registerSchema>["body"];
+
 /**
  * Validation schema for User Login
  */
 export const loginSchema = z.object({
   body: z.object({
     email: z.email({ message: "Please provide a valid email address" }),
-    password: z
-      .string()
-      .min(1, { message: "Password is required" }),
+    password: z.string().min(1, { message: "Password is required" }),
   }),
 });
+
+export type LoginInput = z.infer<typeof loginSchema>["body"];
 
 /**
  * Validation schema for Refresh Token
  */
 export const refreshTokenSchema = z.object({
   body: z.object({
-    refreshToken: z
-      .string()
-      .min(1, { message: "Refresh token is required" }),
+    refreshToken: z.string().min(1, { message: "Refresh token is required" }),
   }),
 });
+
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>["body"];

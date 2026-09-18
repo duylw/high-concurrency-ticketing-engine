@@ -1,3 +1,4 @@
+import { User } from "@prisma/client";
 import { prismaClient } from "../config/db.js";
 import {
   ConflictError,
@@ -7,34 +8,50 @@ import {
 } from "../errors/AppError.js";
 import { hashPassword, comparePassword } from "../utils/password.util.js";
 import { hashToken } from "../utils/crypto.util.js";
-import {
-  generateAuthTokens,
-  verifyRefreshToken,
-} from "../utils/jwt.util.js";
+import { generateAuthTokens, verifyRefreshToken } from "../utils/jwt.util.js";
+import { AuthenticatedUser, TokenPair } from "../types/auth.type.js";
+
+import { RegisterInput, LoginInput } from "../validations/auth.validation.js";
+
+export type SafeUser = Omit<User, "password">;
+
+export type RegisterParams = RegisterInput;
+
+export type LoginParams = LoginInput & {
+  userAgent?: string;
+  ipAddress?: string;
+};
+
+export interface RefreshMeta {
+  userAgent?: string;
+  ipAddress?: string;
+}
 
 /**
  * Helper function to sanitize user object (remove sensitive fields like password)
  */
-const sanitizeUser = (user) => {
-  const { password, ...safeUser } = user;
+const sanitizeUser = (user: User): SafeUser => {
+  const { password: _p, ...safeUser } = user;
   return safeUser;
 };
 
 /**
  * Calculate Refresh Token expiration date (7 days from now)
  */
-const getRefreshTokenExpiry = () => {
+const getRefreshTokenExpiry = (): Date => {
   const expiryDays = parseInt(process.env.JWT_REFRESH_EXPIRES_IN || "7", 10) || 7;
   return new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
 };
 
 /**
  * Register a new User
- *
- * @param {Object} userData - User registration data (email, username, password, name)
- * @returns {Promise<{ user: Object, tokens: Object }>}
  */
-export const register = async ({ email, username, password, name }) => {
+export const register = async ({
+  email,
+  username,
+  password,
+  name,
+}: RegisterParams): Promise<{ user: SafeUser; tokens: TokenPair }> => {
   // 1. Check if email already exists
   const existingEmail = await prismaClient.user.findUnique({
     where: { email },
@@ -67,7 +84,7 @@ export const register = async ({ email, username, password, name }) => {
   });
 
   // 5. Generate Access & Refresh Tokens
-  const tokens = generateAuthTokens(newUser);
+  const tokens = generateAuthTokens(newUser as AuthenticatedUser);
 
   // 6. Save SHA-256 Hashed Refresh Token to Database for session management
   await prismaClient.refreshToken.create({
@@ -86,11 +103,13 @@ export const register = async ({ email, username, password, name }) => {
 
 /**
  * Log in an existing User
- *
- * @param {Object} loginData - { email, password, userAgent, ipAddress }
- * @returns {Promise<{ user: Object, tokens: Object }>}
  */
-export const login = async ({ email, password, userAgent, ipAddress }) => {
+export const login = async ({
+  email,
+  password,
+  userAgent,
+  ipAddress,
+}: LoginParams): Promise<{ user: SafeUser; tokens: TokenPair }> => {
   // 1. Find user by email
   const user = await prismaClient.user.findUnique({
     where: { email },
@@ -111,7 +130,7 @@ export const login = async ({ email, password, userAgent, ipAddress }) => {
   }
 
   // 4. Generate Access & Refresh Tokens
-  const tokens = generateAuthTokens(user);
+  const tokens = generateAuthTokens(user as AuthenticatedUser);
 
   // 5. Save SHA-256 Hashed Refresh Token session in Database
   await prismaClient.refreshToken.create({
@@ -133,14 +152,13 @@ export const login = async ({ email, password, userAgent, ipAddress }) => {
 /**
  * Issue a new token pair using Refresh Token Rotation (RTR)
  * Implements token reuse detection to defend against replay attacks
- *
- * @param {string} incomingRefreshToken - Refresh Token from client
- * @param {Object} meta - { userAgent, ipAddress }
- * @returns {Promise<{ tokens: { accessToken: string, refreshToken: string } }>}
  */
-export const refreshToken = async (incomingRefreshToken, { userAgent, ipAddress } = {}) => {
+export const refreshToken = async (
+  incomingRefreshToken: string,
+  { userAgent, ipAddress }: RefreshMeta = {}
+): Promise<{ accessToken: string; refreshToken: string; tokens: TokenPair }> => {
   // 1. Verify token signature and expiration with JWT util
-  const decoded = verifyRefreshToken(incomingRefreshToken);
+  const decoded = verifyRefreshToken(incomingRefreshToken) as { id: string };
 
   // 2. Hash incoming token for lookup
   const incomingHash = hashToken(incomingRefreshToken);
@@ -175,7 +193,7 @@ export const refreshToken = async (incomingRefreshToken, { userAgent, ipAddress 
   }
 
   // 7. Generate brand new token pair (Access + Refresh)
-  const newTokens = generateAuthTokens(user);
+  const newTokens = generateAuthTokens(user as AuthenticatedUser);
   const newHashedToken = hashToken(newTokens.refreshToken);
 
   // 8. Atomic Token Rotation: Invalidate old token and record new token
@@ -204,11 +222,8 @@ export const refreshToken = async (incomingRefreshToken, { userAgent, ipAddress 
 
 /**
  * Log out user by deleting/invalidating the Refresh Token session
- *
- * @param {string} token - Refresh Token to remove
- * @returns {Promise<void>}
  */
-export const logout = async (token) => {
+export const logout = async (token?: string): Promise<void> => {
   if (!token) return;
 
   const hashed = hashToken(token);
@@ -219,11 +234,8 @@ export const logout = async (token) => {
 
 /**
  * Log out user from all active sessions/devices
- *
- * @param {string} userId - User ID
- * @returns {Promise<void>}
  */
-export const logoutAll = async (userId) => {
+export const logoutAll = async (userId: string): Promise<void> => {
   await prismaClient.refreshToken.deleteMany({
     where: { userId },
   });
@@ -231,11 +243,8 @@ export const logoutAll = async (userId) => {
 
 /**
  * Get all active sessions for a user
- *
- * @param {string} userId - User ID
- * @returns {Promise<Array>} List of active session details
  */
-export const getActiveSessions = async (userId) => {
+export const getActiveSessions = async (userId: string) => {
   const sessions = await prismaClient.refreshToken.findMany({
     where: {
       userId,
@@ -257,12 +266,8 @@ export const getActiveSessions = async (userId) => {
 
 /**
  * Revoke a specific session
- *
- * @param {string} userId - User ID
- * @param {string} sessionId - Session/RefreshToken ID
- * @returns {Promise<void>}
  */
-export const revokeSession = async (userId, sessionId) => {
+export const revokeSession = async (userId: string, sessionId: string): Promise<void> => {
   const session = await prismaClient.refreshToken.findFirst({
     where: { id: sessionId, userId },
   });
@@ -278,11 +283,8 @@ export const revokeSession = async (userId, sessionId) => {
 
 /**
  * Get current authenticated user profile
- *
- * @param {string} userId - User ID from authenticated token
- * @returns {Promise<Object>} Safe user profile
  */
-export const getMe = async (userId) => {
+export const getMe = async (userId: string): Promise<SafeUser> => {
   const user = await prismaClient.user.findUnique({
     where: { id: userId },
   });

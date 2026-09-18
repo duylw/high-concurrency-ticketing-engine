@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prismaClient } from "../config/db.js";
 import { CacheUtil } from "../utils/cache.util.js";
 import { CacheKeys } from "../constants/cacheKeys.js";
@@ -6,14 +7,25 @@ import { NotFoundError, ForbiddenError } from "../errors/AppError.js";
 const EVENT_CACHE_TTL = 3600; // 1 hour for event details
 const EVENT_LIST_CACHE_TTL = 300; // 5 minutes for event list
 
+import {
+  CreateEventInput,
+  CreateTicketTierInput,
+  UpdateEventInput,
+} from "../validations/event.validation.js";
+
+export type CreateEventData = CreateEventInput;
+export type CreateTierData = CreateTicketTierInput;
+export type UpdateEventData = UpdateEventInput;
+
+export interface GetEventsQuery {
+  page?: number | string;
+  limit?: number | string;
+}
+
 /**
  * Create a new Event
- *
- * @param {string} organizerId - ID of organizer
- * @param {Object} eventData - { title, description, bannerUrl, startTime, endTime }
- * @returns {Promise<Object>} Created Event
  */
-export const createEvent = async (organizerId, eventData) => {
+export const createEvent = async (organizerId: string, eventData: CreateEventData) => {
   const newEvent = await prismaClient.event.create({
     data: {
       ...eventData,
@@ -37,14 +49,13 @@ export const createEvent = async (organizerId, eventData) => {
 
 /**
  * Create a Ticket Tier for an Event
- *
- * @param {string} userId - ID of authenticated user
- * @param {string} userRole - Role of user
- * @param {string} eventId - ID of event
- * @param {Object} tierData - { name, price, totalStock }
- * @returns {Promise<Object>} Created Ticket Tier
  */
-export const createTicketTier = async (userId, userRole, eventId, tierData) => {
+export const createTicketTier = async (
+  userId: string,
+  userRole: string,
+  eventId: string,
+  tierData: CreateTierData
+) => {
   const event = await prismaClient.event.findUnique({
     where: { id: eventId },
   });
@@ -77,16 +88,35 @@ export const createTicketTier = async (userId, userRole, eventId, tierData) => {
 
 /**
  * Get paginated list of Events using Cache-Aside
- *
- * @param {Object} query - { page, limit }
- * @returns {Promise<{ total: number, page: number, limit: number, events: Array, isFromCache: boolean }>}
  */
-export const getEvents = async ({ page = 1, limit = 10 }) => {
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
+export const getEvents = async ({ page = 1, limit = 10 }: GetEventsQuery) => {
+  const pageNum = Math.max(1, typeof page === "string" ? parseInt(page, 10) || 1 : page);
+  const limitNum = Math.max(
+    1,
+    Math.min(100, typeof limit === "string" ? parseInt(limit, 10) || 10 : limit)
+  );
   const cacheKey = CacheKeys.EVENT_LIST(pageNum, limitNum);
 
-  const { data, isFromCache } = await CacheUtil.getOrSet(
+  type EventListItem = Prisma.EventGetPayload<{
+    include: {
+      ticketTiers: {
+        select: {
+          id: true;
+          name: true;
+          price: true;
+          totalStock: true;
+          availableStock: true;
+        };
+      };
+    };
+  }>;
+
+  interface EventListResult {
+    total: number;
+    events: EventListItem[];
+  }
+
+  const { data, isFromCache } = await CacheUtil.getOrSet<EventListResult>(
     cacheKey,
     EVENT_LIST_CACHE_TTL,
     async () => {
@@ -116,24 +146,35 @@ export const getEvents = async ({ page = 1, limit = 10 }) => {
   );
 
   return {
-    total: data.total,
+    total: data?.total ?? 0,
     page: pageNum,
     limit: limitNum,
-    events: data.events,
+    events: data?.events ?? [],
     isFromCache,
   };
 };
 
 /**
  * Get single Event by ID using Cache-Aside with Anti-Stampede & Anti-Penetration
- *
- * @param {string} eventId
- * @returns {Promise<{ event: Object, isFromCache: boolean }>}
  */
-export const getEventById = async (eventId) => {
+export const getEventById = async (eventId: string) => {
   const cacheKey = CacheKeys.EVENT_DETAILS(eventId);
 
-  const { data, isFromCache } = await CacheUtil.getOrSet(
+  type FullEvent = Prisma.EventGetPayload<{
+    include: {
+      ticketTiers: true;
+      organizer: {
+        select: {
+          id: true;
+          name: true;
+          email: true;
+          username: true;
+        };
+      };
+    };
+  }>;
+
+  const { data, isFromCache } = await CacheUtil.getOrSet<FullEvent>(
     cacheKey,
     EVENT_CACHE_TTL,
     async () => {
@@ -168,14 +209,13 @@ export const getEventById = async (eventId) => {
 
 /**
  * Update Event details & Invalidate Cache
- *
- * @param {string} userId - User ID
- * @param {string} userRole - User Role
- * @param {string} eventId - Event ID
- * @param {Object} updateData - Partial event data
- * @returns {Promise<Object>} Updated Event
  */
-export const updateEvent = async (userId, userRole, eventId, updateData) => {
+export const updateEvent = async (
+  userId: string,
+  userRole: string,
+  eventId: string,
+  updateData: UpdateEventData
+) => {
   const existingEvent = await prismaClient.event.findUnique({
     where: { id: eventId },
   });
@@ -212,11 +252,8 @@ export const updateEvent = async (userId, userRole, eventId, updateData) => {
 
 /**
  * Get all events organized by current organizer with aggregate sales metrics
- *
- * @param {string} organizerId - ID of organizer
- * @returns {Promise<Array>} List of events with analytics
  */
-export const getOrganizerEvents = async (organizerId) => {
+export const getOrganizerEvents = async (organizerId: string) => {
   const events = await prismaClient.event.findMany({
     where: { organizerId },
     include: {
@@ -253,7 +290,8 @@ export const getOrganizerEvents = async (organizerId) => {
       });
     });
 
-    const soldOutPercentage = totalStock > 0 ? Math.round((totalTicketsSold / totalStock) * 100) : 0;
+    const soldOutPercentage =
+      totalStock > 0 ? Math.round((totalTicketsSold / totalStock) * 100) : 0;
 
     return {
       ...event,
@@ -275,13 +313,8 @@ export const getOrganizerEvents = async (organizerId) => {
 
 /**
  * Delete or cancel an event
- *
- * @param {string} userId - User ID
- * @param {string} userRole - User Role
- * @param {string} eventId - Event ID
- * @returns {Promise<Object>} Status message
  */
-export const deleteEvent = async (userId, userRole, eventId) => {
+export const deleteEvent = async (userId: string, userRole: string, eventId: string) => {
   const event = await prismaClient.event.findUnique({
     where: { id: eventId },
     include: {

@@ -16,6 +16,8 @@ export const createEventSchema = z.object({
   }),
 });
 
+export type CreateEventInput = z.infer<typeof createEventSchema>["body"];
+
 /**
  * Validation schema for creating a Ticket Tier
  */
@@ -29,6 +31,8 @@ export const createTicketTierSchema = z.object({
     totalStock: z.number().int().positive("Total stock must be at least 1"),
   }),
 });
+
+export type CreateTicketTierInput = z.infer<typeof createTicketTierSchema>["body"];
 
 /**
  * Validation schema for updating an Event
@@ -49,6 +53,8 @@ export const updateEventSchema = z.object({
   }),
 });
 
+export type UpdateEventInput = z.infer<typeof updateEventSchema>["body"];
+
 /**
  * Validation schema for Event ID parameter
  */
@@ -57,3 +63,5 @@ export const eventIdParamSchema = z.object({
     id: z.uuid("Invalid event ID format"),
   }),
 });
+
+export type EventIdParam = z.infer<typeof eventIdParamSchema>["params"];
