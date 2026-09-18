@@ -1,0 +1,33 @@
+import { Queue } from "bullmq";
+
+export const connection = {
+  host: process.env.REDIS_HOST || "localhost",
+  port: parseInt(process.env.REDIS_PORT || "6379", 10),
+  password: process.env.REDIS_PASSWORD || undefined,
+};
+
+export const ticketReleaseQueue = new Queue("ticket-release", {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: "exponential",
+      delay: 1000,
+    },
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
+});
+
+export const notificationQueue = new Queue("notification", {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: "exponential",
+      delay: 1000,
+    },
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
+});

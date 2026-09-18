@@ -1,14 +1,19 @@
-import { HttpStatus } from "../constants/httpStatus.js";
+import { HttpStatus, HttpStatusCode } from "../constants/httpStatus.js";
 
 /**
  * Base Application Error class for operational errors
  */
 export class AppError extends Error {
-  constructor(message, statusCode = HttpStatus.INTERNAL_SERVER_ERROR) {
+  public statusCode: HttpStatusCode;
+  public status: "fail" | "error";
+  public isOperational: boolean;
+  public errors?: unknown;
+
+  constructor(message: string, statusCode: HttpStatusCode = HttpStatus.INTERNAL_SERVER_ERROR) {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
-    this.isOperational = true; // Distinguish operational errors from programming bugs
+    this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);
   }
@@ -18,7 +23,9 @@ export class AppError extends Error {
  * 400 Bad Request Error
  */
 export class BadRequestError extends AppError {
-  constructor(message = "Bad Request", errors = null) {
+  public errors: unknown;
+
+  constructor(message: string = "Bad Request", errors: unknown = null) {
     super(message, HttpStatus.BAD_REQUEST);
     this.errors = errors;
   }
@@ -28,7 +35,7 @@ export class BadRequestError extends AppError {
  * 401 Unauthorized Error (Authentication failed)
  */
 export class UnauthorizedError extends AppError {
-  constructor(message = "Unauthorized access") {
+  constructor(message: string = "Unauthorized access") {
     super(message, HttpStatus.UNAUTHORIZED);
   }
 }
@@ -37,7 +44,7 @@ export class UnauthorizedError extends AppError {
  * 403 Forbidden Error (Permission denied)
  */
 export class ForbiddenError extends AppError {
-  constructor(message = "Forbidden resource") {
+  constructor(message: string = "Forbidden resource") {
     super(message, HttpStatus.FORBIDDEN);
   }
 }
@@ -46,7 +53,7 @@ export class ForbiddenError extends AppError {
  * 404 Not Found Error
  */
 export class NotFoundError extends AppError {
-  constructor(message = "Resource not found") {
+  constructor(message: string = "Resource not found") {
     super(message, HttpStatus.NOT_FOUND);
   }
 }
@@ -55,7 +62,7 @@ export class NotFoundError extends AppError {
  * 409 Conflict Error (Duplicate email, username, etc.)
  */
 export class ConflictError extends AppError {
-  constructor(message = "Resource already exists") {
+  constructor(message: string = "Resource already exists") {
     super(message, HttpStatus.CONFLICT);
   }
 }
@@ -64,7 +71,7 @@ export class ConflictError extends AppError {
  * 500 Internal Server Error
  */
 export class InternalServerError extends AppError {
-  constructor(message = "Internal server error") {
+  constructor(message: string = "Internal server error") {
     super(message, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }

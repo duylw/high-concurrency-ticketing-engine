@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379", 10);
@@ -15,7 +15,7 @@ const redisClient = new Redis({
   maxRetriesPerRequest: null,
   enableReadyCheck: true,
   lazyConnect: true,
-  retryStrategy(times) {
+  retryStrategy(times: number) {
     const delay = Math.min(times * 100, 3000);
     return delay;
   },
@@ -29,7 +29,7 @@ redisClient.on("ready", () => {
   console.log("[REDIS] Client is ready to accept commands.");
 });
 
-redisClient.on("error", (err) => {
+redisClient.on("error", (err: Error) => {
   console.error("[REDIS] Connection error:", err.message);
 });
 
@@ -40,7 +40,7 @@ redisClient.on("close", () => {
 /**
  * Connect to Redis (Fail-Fast check during server startup)
  */
-export const connectRedis = async () => {
+export const connectRedis = async (): Promise<Redis> => {
   try {
     if (redisClient.status === "ready" || redisClient.status === "connect") {
       return redisClient;
@@ -52,7 +52,8 @@ export const connectRedis = async () => {
     }
     return redisClient;
   } catch (error) {
-    console.error("[REDIS] Failed to connect to Redis:", error.message);
+    const err = error as Error;
+    console.error("[REDIS] Failed to connect to Redis:", err.message);
     throw error;
   }
 };
@@ -60,14 +61,15 @@ export const connectRedis = async () => {
 /**
  * Disconnect from Redis (Graceful Shutdown)
  */
-export const disconnectRedis = async () => {
+export const disconnectRedis = async (): Promise<void> => {
   try {
     if (redisClient.status !== "end") {
       await redisClient.quit();
       console.log("[REDIS] Disconnected cleanly.");
     }
   } catch (error) {
-    console.error("[REDIS] Error disconnecting, forcing disconnect:", error.message);
+    const err = error as Error;
+    console.error("[REDIS] Error disconnecting, forcing disconnect:", err.message);
     redisClient.disconnect();
   }
 };

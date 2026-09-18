@@ -4,6 +4,11 @@ const NULL_CACHE_SENTINEL = "__NULL_CACHE__";
 const NULL_CACHE_TTL = 60; // 60 seconds for non-existent records
 const MUTEX_LOCK_TTL = 5; // 5 seconds lock expiration
 
+export interface CacheResult<T> {
+  data: T | null;
+  isFromCache: boolean;
+}
+
 /**
  * High-Performance Caching Utility
  * Implements Cache-Aside pattern, Anti-Stampede Mutex Locking, and Anti-Penetration Null Caching
@@ -11,48 +16,37 @@ const MUTEX_LOCK_TTL = 5; // 5 seconds lock expiration
 export const CacheUtil = {
   /**
    * Get parsed JSON value from cache
-   *
-   * @param {string} key
-   * @returns {Promise<any|null>}
    */
-  async get(key) {
+  async get<T = unknown>(key: string): Promise<T | null> {
     const data = await redisClient.get(key);
     if (!data) return null;
     if (data === NULL_CACHE_SENTINEL) return null;
     try {
-      return JSON.parse(data);
+      return JSON.parse(data) as T;
     } catch {
-      return data;
+      return data as unknown as T;
     }
   },
 
   /**
    * Set JSON value in cache with TTL
-   *
-   * @param {string} key
-   * @param {any} value
-   * @param {number} ttlSeconds
    */
-  async set(key, value, ttlSeconds = 3600) {
+  async set<T = unknown>(key: string, value: T, ttlSeconds: number = 3600): Promise<void> {
     const payload = typeof value === "string" ? value : JSON.stringify(value);
     await redisClient.set(key, payload, "EX", ttlSeconds);
   },
 
   /**
    * Delete a single key from cache
-   *
-   * @param {string} key
    */
-  async del(key) {
+  async del(key: string): Promise<void> {
     await redisClient.del(key);
   },
 
   /**
    * Delete all keys matching a glob pattern using SCAN (non-blocking)
-   *
-   * @param {string} pattern - e.g. 'events:*'
    */
-  async delPattern(pattern) {
+  async delPattern(pattern: string): Promise<void> {
     let cursor = "0";
     do {
       const [nextCursor, keys] = await redisClient.scan(
@@ -71,13 +65,12 @@ export const CacheUtil = {
 
   /**
    * Cache-Aside orchestrator with Mutex Lock and Null Caching
-   *
-   * @param {string} key - Cache key
-   * @param {number} ttlSeconds - Cache TTL in seconds
-   * @param {Function} fetcherFn - Async function returning fresh data from Database
-   * @returns {Promise<{ data: any, isFromCache: boolean }>}
    */
-  async getOrSet(key, ttlSeconds, fetcherFn) {
+  async getOrSet<T = unknown>(
+    key: string,
+    ttlSeconds: number,
+    fetcherFn: () => Promise<T | null | undefined>
+  ): Promise<CacheResult<T>> {
     // 1. Attempt to read from Redis
     const cached = await redisClient.get(key);
 
@@ -86,15 +79,15 @@ export const CacheUtil = {
         return { data: null, isFromCache: true };
       }
       try {
-        return { data: JSON.parse(cached), isFromCache: true };
+        return { data: JSON.parse(cached) as T, isFromCache: true };
       } catch {
-        return { data: cached, isFromCache: true };
+        return { data: cached as unknown as T, isFromCache: true };
       }
     }
 
     // 2. Cache Miss: Acquire Mutex Lock to prevent Cache Stampede (Thundering Herd)
     const lockKey = `lock:${key}`;
-    const acquiredLock = await redisClient.set(lockKey, "1", "NX", "EX", MUTEX_LOCK_TTL);
+    const acquiredLock = await redisClient.set(lockKey, "1", "EX", MUTEX_LOCK_TTL, "NX");
 
     if (acquiredLock === "OK") {
       try {
@@ -109,7 +102,7 @@ export const CacheUtil = {
 
         // Cache fresh data in Redis
         await redisClient.set(key, JSON.stringify(freshData), "EX", ttlSeconds);
-        return { data: freshData, isFromCache: false };
+        return { data: freshData as T, isFromCache: false };
       } finally {
         // Release Mutex Lock
         await redisClient.del(lockKey);
@@ -123,15 +116,15 @@ export const CacheUtil = {
           return { data: null, isFromCache: true };
         }
         try {
-          return { data: JSON.parse(retryCached), isFromCache: true };
+          return { data: JSON.parse(retryCached) as T, isFromCache: true };
         } catch {
-          return { data: retryCached, isFromCache: true };
+          return { data: retryCached as unknown as T, isFromCache: true };
         }
       }
 
       // Fallback if still not available
       const fallbackData = await fetcherFn();
-      return { data: fallbackData, isFromCache: false };
+      return { data: (fallbackData ?? null) as T | null, isFromCache: false };
     }
   },
 };
