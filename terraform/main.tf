@@ -55,7 +55,7 @@ resource "aws_security_group" "web_sg" {
 # ==============================================================================
 resource "aws_instance" "app_server" {
   ami           = "ami-03acbba64aef9bf5c" # Canonical, Ubuntu 24.04 LTS (amd64)
-  instance_type = "c7i-flex.large"        # 2 vCPU, 4 GiB memory (Compute Optimized Flex)
+  instance_type = "t3.medium"             # 2 vCPU, 4 GiB memory (Compute Optimized Flex)
   key_name      = "ticketing-key"         # Key pair có sẵn đã tạo trên AWS Console & lưu ở ~/.ssh/ticketing-key.pem
 
   vpc_security_group_ids = [aws_security_group.web_sg.id]

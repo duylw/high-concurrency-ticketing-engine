@@ -32,6 +32,7 @@
     "test:ui-cleanup": "tsx src/scripts/test-production-ui-cleanup.js",
     "test:postman": "npx --yes newman run docs/postman_collection.json",
     "test:prod-health": "tsx src/scripts/test-prod-health.js",
+    "test:client-scaffold": "node src/scripts/test-frontend-scaffold.js",
     "benchmark:read": "tsx src/scripts/benchmark-read.js",
     "benchmark:flash-sale": "tsx src/scripts/benchmark-flash-sale.js",
     "test:benchmark": "npm run benchmark:read && npm run benchmark:flash-sale",
