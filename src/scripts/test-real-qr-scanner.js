@@ -136,13 +136,17 @@ const runRealQrScannerTests = async () => {
 
     authStore.setAuth({ user: orgUser, accessToken: orgToken, refreshToken: orgRefreshToken });
 
-    // Find active event and tier with stock
     const myEventsRes = await organizerApi.getMyEvents();
     const myEvents = Array.isArray(myEventsRes.data) ? myEventsRes.data : (myEventsRes.data?.events || []);
-    let targetEvent = myEvents.find(e => e.status === "PUBLISHED" && e.ticketTiers?.some(t => (t.availableStock ?? t.totalStock) > 0));
+    const now = new Date();
+    let targetEvent = myEvents.find(e => 
+      e.status === "PUBLISHED" && 
+      (!e.saleEndTime || new Date(e.saleEndTime) > now) &&
+      (!e.saleStartTime || new Date(e.saleStartTime) <= now) &&
+      e.ticketTiers?.some(t => (t.availableStock ?? t.totalStock) > 0)
+    );
 
     if (!targetEvent) {
-      const now = new Date();
       const newEvent = await organizerApi.createEvent({
         title: `QR Scanner Live Event ${Date.now()}`,
         description: "Live concert for real QR code scanner validation",

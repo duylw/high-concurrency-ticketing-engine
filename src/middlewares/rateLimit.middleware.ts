@@ -1,0 +1,25 @@
+import { rateLimit } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import redisClient from "../config/redis.js";
+
+/**
+ * Rate Limiter for Authentication endpoints (Login & Register)
+ * Limits requests per IP using Redis to prevent brute-force attacks
+ */
+export const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === "production" ? 20 : 1000, // 1000 in dev/test, 20 in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: ((...args: string[]) =>
+      (redisClient.call as (...a: string[]) => Promise<unknown>)(...args)) as never,
+    prefix: "rl:auth:",
+  }),
+  handler: (_req, res) => {
+    return res.status(429).json({
+      success: false,
+      message: "Too many authentication attempts. Please try again after 15 minutes.",
+    });
+  },
+});
