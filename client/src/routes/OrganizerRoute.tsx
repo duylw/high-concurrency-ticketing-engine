@@ -20,8 +20,8 @@ export const OrganizerRoute: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <span className="spinner" style={{ width: '2rem', height: '2rem' }} />
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <span className="spinner w-8 h-8" />
       </div>
     )
   }

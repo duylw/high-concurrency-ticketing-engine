@@ -2,36 +2,20 @@ import React from 'react'
 
 export const Footer: React.FC = () => {
   return (
-    <footer
-      style={{
-        borderTop: '1px solid var(--color-border-subtle)',
-        background: 'rgba(7, 9, 14, 0.95)',
-        padding: '2.5rem 0',
-        marginTop: 'auto',
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1.5rem',
-        }}
-      >
+    <footer className="border-t border-border-subtle bg-[#07090E]/95 py-10 mt-auto">
+      <div className="container mx-auto px-6 flex flex-wrap justify-between items-center gap-6">
         <div>
-          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-text-primary)', marginBottom: '0.25rem' }}>
+          <div className="font-bold text-base text-text-primary mb-1">
             Ticketing Engine & Flash-Sale Platform
           </div>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
+          <p className="text-xs text-text-muted">
             Hệ thống đặt vé trực tuyến tải cao với bảo vệ Pessimistic Locking & hàng đợi hoàn vé BullMQ.
           </p>
         </div>
 
-        <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', textAlign: 'right' }}>
+        <div className="text-xs text-text-muted text-right">
           <div>Node.js • Express 5 • PostgreSQL 16 • Redis 7 • React 19 • TypeScript</div>
-          <div style={{ marginTop: '0.25rem' }}>© 2026 Ticketing Engine. All rights reserved.</div>
+          <div className="mt-1">© 2026 Ticketing Engine. All rights reserved.</div>
         </div>
       </div>
     </footer>

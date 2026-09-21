@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LogIn, UserPlus, Mail, Lock, User, Briefcase } from 'lucide-react'
 import { Modal, Button } from '@/components/common'
 import { useAuth } from '@/context/AuthContext'
+import { cn } from '@/utils/cn'
 import type { Role } from '@/types'
 
 export const AuthModal: React.FC = () => {
@@ -62,56 +63,41 @@ export const AuthModal: React.FC = () => {
     <Modal
       isOpen={isAuthModalOpen}
       onClose={closeAuthModal}
-      maxWidth="460px"
+      maxWidth="max-w-[460px]"
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {activeTab === 'login' ? <LogIn size={20} className="text-brand" /> : <UserPlus size={20} className="text-brand" />}
+        <div className="flex items-center gap-2">
+          {activeTab === 'login' ? (
+            <LogIn size={20} className="text-brand-neon" />
+          ) : (
+            <UserPlus size={20} className="text-brand-neon" />
+          )}
           <span>{activeTab === 'login' ? 'Đăng Nhập Tài Khoản' : 'Tạo Tài Khoản Mới'}</span>
         </div>
       }
     >
       {/* Tab Switcher */}
-      <div
-        style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--color-border-subtle)',
-          marginBottom: '1.5rem',
-          background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: 'var(--radius-md)',
-          padding: '3px',
-        }}
-      >
+      <div className="flex p-1 mb-6 bg-white/[0.03] border border-border-subtle rounded-lg">
         <button
           type="button"
           onClick={() => setActiveTab('login')}
-          style={{
-            flex: 1,
-            padding: '0.625rem',
-            textAlign: 'center',
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            borderRadius: 'var(--radius-sm)',
-            background: activeTab === 'login' ? 'var(--color-bg-tertiary)' : 'transparent',
-            color: activeTab === 'login' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-            transition: 'all var(--transition-fast)',
-          }}
+          className={cn(
+            'flex-1 py-2 text-center font-semibold text-sm rounded-md transition-all duration-150',
+            activeTab === 'login'
+              ? 'bg-dark-tertiary text-text-primary shadow-sm'
+              : 'text-text-muted hover:text-text-primary'
+          )}
         >
           Đăng Nhập
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('register')}
-          style={{
-            flex: 1,
-            padding: '0.625rem',
-            textAlign: 'center',
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            borderRadius: 'var(--radius-sm)',
-            background: activeTab === 'register' ? 'var(--color-bg-tertiary)' : 'transparent',
-            color: activeTab === 'register' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
-            transition: 'all var(--transition-fast)',
-          }}
+          className={cn(
+            'flex-1 py-2 text-center font-semibold text-sm rounded-md transition-all duration-150',
+            activeTab === 'register'
+              ? 'bg-dark-tertiary text-text-primary shadow-sm'
+              : 'text-text-muted hover:text-text-primary'
+          )}
         >
           Đăng Ký
         </button>
@@ -119,13 +105,13 @@ export const AuthModal: React.FC = () => {
 
       {/* Login Form */}
       {activeTab === 'login' ? (
-        <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Email
             </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
                 <Mail size={16} />
               </span>
               <input
@@ -134,25 +120,17 @@ export const AuthModal: React.FC = () => {
                 placeholder="buyer@ticketing.com"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.6875rem 0.875rem 0.6875rem 2.5rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid var(--color-border-medium)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--color-text-primary)',
-                  fontSize: '0.9375rem',
-                }}
+                className="w-full py-2.5 pl-10 pr-3.5 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Mật khẩu
             </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
                 <Lock size={16} />
               </span>
               <input
@@ -161,15 +139,7 @@ export const AuthModal: React.FC = () => {
                 placeholder="••••••••"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.6875rem 0.875rem 0.6875rem 2.5rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid var(--color-border-medium)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--color-text-primary)',
-                  fontSize: '0.9375rem',
-                }}
+                className="w-full py-2.5 pl-10 pr-3.5 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
           </div>
@@ -179,20 +149,20 @@ export const AuthModal: React.FC = () => {
             variant="primary"
             size="lg"
             isLoading={isLoading}
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            className="w-full mt-2"
           >
             Đăng Nhập
           </Button>
         </form>
       ) : (
         /* Register Form */
-        <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+        <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-3.5">
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Họ và tên
             </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
                 <User size={16} />
               </span>
               <input
@@ -201,21 +171,13 @@ export const AuthModal: React.FC = () => {
                 placeholder="Nguyễn Văn A"
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.625rem 0.875rem 0.625rem 2.5rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid var(--color-border-medium)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--color-text-primary)',
-                  fontSize: '0.875rem',
-                }}
+                className="w-full py-2 pl-10 pr-3 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Tên đăng nhập (Username)
             </label>
             <input
@@ -224,20 +186,12 @@ export const AuthModal: React.FC = () => {
               placeholder="nguyenvana"
               value={regUsername}
               onChange={(e) => setRegUsername(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.875rem',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid var(--color-border-medium)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--color-text-primary)',
-                fontSize: '0.875rem',
-              }}
+              className="w-full py-2 px-3 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary transition-colors"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Email
             </label>
             <input
@@ -246,20 +200,12 @@ export const AuthModal: React.FC = () => {
               placeholder="user@example.com"
               value={regEmail}
               onChange={(e) => setRegEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.875rem',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid var(--color-border-medium)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--color-text-primary)',
-                fontSize: '0.875rem',
-              }}
+              className="w-full py-2 px-3 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary transition-colors"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Mật khẩu (tối thiểu 8 ký tự)
             </label>
             <input
@@ -269,65 +215,47 @@ export const AuthModal: React.FC = () => {
               placeholder="••••••••"
               value={regPassword}
               onChange={(e) => setRegPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.625rem 0.875rem',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid var(--color-border-medium)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--color-text-primary)',
-                fontSize: '0.875rem',
-              }}
+              className="w-full py-2 px-3 bg-white/[0.04] border border-border-medium rounded-md text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-brand-primary transition-colors"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+            <label className="block text-xs font-semibold text-text-secondary mb-1.5">
               Loại tài khoản
             </label>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="grid grid-cols-2 gap-3">
               <label
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.625rem 0.75rem',
-                  border: `1px solid ${regRole === 'USER' ? 'var(--color-brand-primary)' : 'var(--color-border-subtle)'}`,
-                  background: regRole === 'USER' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  fontSize: '0.8125rem',
-                }}
+                className={cn(
+                  'flex items-center gap-2 p-2.5 rounded-md border text-xs font-medium cursor-pointer transition-colors',
+                  regRole === 'USER'
+                    ? 'border-brand-primary bg-brand-primary/10 text-text-primary'
+                    : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium'
+                )}
               >
                 <input
                   type="radio"
                   name="role"
                   checked={regRole === 'USER'}
                   onChange={() => setRegRole('USER')}
+                  className="accent-brand-primary"
                 />
                 <span>Khách Mua Vé</span>
               </label>
 
               <label
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.625rem 0.75rem',
-                  border: `1px solid ${regRole === 'ORGANIZER' ? 'var(--color-brand-primary)' : 'var(--color-border-subtle)'}`,
-                  background: regRole === 'ORGANIZER' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  fontSize: '0.8125rem',
-                }}
+                className={cn(
+                  'flex items-center gap-2 p-2.5 rounded-md border text-xs font-medium cursor-pointer transition-colors',
+                  regRole === 'ORGANIZER'
+                    ? 'border-brand-primary bg-brand-primary/10 text-text-primary'
+                    : 'border-border-subtle bg-transparent text-text-secondary hover:border-border-medium'
+                )}
               >
                 <input
                   type="radio"
                   name="role"
                   checked={regRole === 'ORGANIZER'}
                   onChange={() => setRegRole('ORGANIZER')}
+                  className="accent-brand-primary"
                 />
                 <Briefcase size={14} />
                 <span>Ban Tổ Chức</span>
@@ -340,7 +268,7 @@ export const AuthModal: React.FC = () => {
             variant="neon"
             size="lg"
             isLoading={isLoading}
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            className="w-full mt-2"
           >
             Tạo Tài Khoản
           </Button>

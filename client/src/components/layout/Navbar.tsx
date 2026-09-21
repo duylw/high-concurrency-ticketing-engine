@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Ticket, LogIn, LogOut, User, QrCode, LayoutDashboard } from 'lucide-react'
 import { Button, Badge } from '@/components/common'
 import { useAuth } from '@/context/AuthContext'
+import { cn } from '@/utils/cn'
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, isOrganizer, logout, openAuthModal } = useAuth()
@@ -11,66 +12,26 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        background: 'rgba(7, 9, 14, 0.85)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid var(--color-border-subtle)',
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '4.25rem',
-        }}
-      >
+    <header className="sticky top-0 z-50 bg-[#07090E]/85 backdrop-blur-md border-b border-border-subtle">
+      <div className="container mx-auto px-6 flex items-center justify-between h-16">
         {/* Brand Logo */}
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.625rem',
-            fontWeight: 800,
-            fontSize: '1.25rem',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          <div
-            style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, #6366F1 0%, #818CF8 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(99, 102, 241, 0.5)',
-            }}
-          >
+        <Link to="/" className="flex items-center gap-2.5 font-extrabold text-xl tracking-tight">
+          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/50">
             <Ticket size={18} color="#FFFFFF" />
           </div>
-          <span>
-            Ticketing<span className="text-brand">Engine</span>
+          <span className="text-text-primary">
+            Ticketing<span className="text-brand-neon">Engine</span>
           </span>
         </Link>
 
         {/* Center Nav Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <nav className="flex items-center gap-6">
           <Link
             to="/"
-            style={{
-              fontSize: '0.9375rem',
-              fontWeight: 600,
-              color: isActive('/') ? 'var(--color-brand-neon)' : 'var(--color-text-secondary)',
-              transition: 'color var(--transition-fast)',
-            }}
+            className={cn(
+              'text-sm font-semibold transition-colors duration-150',
+              isActive('/') ? 'text-brand-neon' : 'text-text-secondary hover:text-text-primary'
+            )}
           >
             Sự Kiện
           </Link>
@@ -78,12 +39,10 @@ export const Navbar: React.FC = () => {
           {isAuthenticated && (
             <Link
               to="/my-orders"
-              style={{
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                color: isActive('/my-orders') ? 'var(--color-brand-neon)' : 'var(--color-text-secondary)',
-                transition: 'color var(--transition-fast)',
-              }}
+              className={cn(
+                'text-sm font-semibold transition-colors duration-150',
+                isActive('/my-orders') ? 'text-brand-neon' : 'text-text-secondary hover:text-text-primary'
+              )}
             >
               Vé Của Tôi
             </Link>
@@ -93,15 +52,10 @@ export const Navbar: React.FC = () => {
             <>
               <Link
                 to="/organizer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  fontSize: '0.9375rem',
-                  fontWeight: 600,
-                  color: isActive('/organizer') ? 'var(--color-brand-neon)' : 'var(--color-text-secondary)',
-                  transition: 'color var(--transition-fast)',
-                }}
+                className={cn(
+                  'flex items-center gap-1.5 text-sm font-semibold transition-colors duration-150',
+                  isActive('/organizer') ? 'text-brand-neon' : 'text-text-secondary hover:text-text-primary'
+                )}
               >
                 <LayoutDashboard size={16} />
                 <span>Kênh Ban Tổ Chức</span>
@@ -109,15 +63,10 @@ export const Navbar: React.FC = () => {
 
               <Link
                 to="/scanner"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.375rem',
-                  fontSize: '0.9375rem',
-                  fontWeight: 600,
-                  color: isActive('/scanner') ? 'var(--color-brand-neon)' : 'var(--color-text-secondary)',
-                  transition: 'color var(--transition-fast)',
-                }}
+                className={cn(
+                  'flex items-center gap-1.5 text-sm font-semibold transition-colors duration-150',
+                  isActive('/scanner') ? 'text-brand-neon' : 'text-text-secondary hover:text-text-primary'
+                )}
               >
                 <QrCode size={16} />
                 <span>Soát Vé</span>
@@ -127,22 +76,12 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Right Actions / Auth State */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="flex items-center gap-4">
           {isAuthenticated ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.375rem 0.75rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid var(--color-border-subtle)',
-                  borderRadius: 'var(--radius-full)',
-                }}
-              >
-                <User size={15} className="text-brand" />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            <div className="flex items-center gap-3.5">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] border border-border-subtle rounded-full">
+                <User size={15} className="text-brand-neon" />
+                <span className="text-xs font-semibold text-text-primary max-w-[140px] truncate">
                   {user?.name || user?.username || user?.email}
                 </span>
                 <Badge variant={isOrganizer ? 'glow' : 'neutral'} withDot={false}>
