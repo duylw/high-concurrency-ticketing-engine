@@ -8,6 +8,7 @@ export interface TicketTier {
   description?: string | null
   createdAt?: string
   updatedAt?: string
+  event?: EventItem
 }
 
 export interface EventItem {

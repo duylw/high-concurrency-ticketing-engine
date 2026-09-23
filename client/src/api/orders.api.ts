@@ -2,9 +2,9 @@ import { httpClient } from './http.client'
 import type { ApiResponse, Order, TicketItem } from '@/types'
 
 export interface HoldTicketPayload {
-  eventId: string
   ticketTierId: string
   quantity: number
+  eventId?: string
 }
 
 export const ordersApi = {
