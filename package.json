@@ -35,6 +35,7 @@
     "test:client-scaffold": "node src/scripts/test-frontend-scaffold.js",
     "test:client-auth": "node src/scripts/test-frontend-auth-flow.js",
     "test:tailwind-migration": "node src/scripts/test-tailwind-migration.js",
+    "test:customer-flow": "node src/scripts/test-frontend-customer-flow.js",
     "benchmark:read": "tsx src/scripts/benchmark-read.js",
     "benchmark:flash-sale": "tsx src/scripts/benchmark-flash-sale.js",
     "test:benchmark": "npm run benchmark:read && npm run benchmark:flash-sale",
