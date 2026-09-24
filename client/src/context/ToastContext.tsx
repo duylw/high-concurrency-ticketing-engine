@@ -1,8 +1,20 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import { Toast, type ToastItem, type ToastType } from '@/components/common/Toast'
 
+export interface ShowToastOptions {
+  type?: ToastType
+  message: string
+  title?: string
+  duration?: number
+}
+
 interface ToastContextType {
-  showToast: (type: ToastType, message: string, title?: string, duration?: number) => void
+  showToast: (
+    typeOrOptions: ToastType | ShowToastOptions,
+    message?: string,
+    title?: string,
+    duration?: number
+  ) => void
   success: (message: string, title?: string, duration?: number) => void
   error: (message: string, title?: string, duration?: number) => void
   info: (message: string, title?: string, duration?: number) => void
@@ -20,7 +32,28 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [])
 
   const showToast = useCallback(
-    (type: ToastType, message: string, title?: string, duration: number = 3500) => {
+    (
+      typeOrOptions: ToastType | ShowToastOptions,
+      rawMessage?: string,
+      rawTitle?: string,
+      rawDuration: number = 3500
+    ) => {
+      let type: ToastType = 'info'
+      let message = ''
+      let title: string | undefined = undefined
+      let duration = rawDuration
+
+      if (typeof typeOrOptions === 'object' && typeOrOptions !== null) {
+        type = typeOrOptions.type || 'info'
+        message = typeOrOptions.message || ''
+        title = typeOrOptions.title
+        duration = typeOrOptions.duration ?? 3500
+      } else {
+        type = typeOrOptions
+        message = rawMessage || ''
+        title = rawTitle
+      }
+
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
       const newToast: ToastItem = { id, type, message, title, duration }
 
@@ -34,6 +67,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     },
     [removeToast]
   )
+
 
   const success = useCallback(
     (message: string, title: string = 'Thành công', duration?: number) => {
