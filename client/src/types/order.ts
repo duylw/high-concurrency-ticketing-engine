@@ -32,3 +32,32 @@ export interface Order {
   ticketTier?: TicketTier
   tickets?: TicketItem[]
 }
+
+export interface CheckInResult {
+  id: string
+  ticketCode: string
+  status: TicketStatus
+  checkedInAt?: string | null
+  attendeeName?: string | null
+  user?: {
+    id: string
+    name: string
+    email: string
+  }
+  ticketTier?: {
+    id?: string
+    name: string
+    price: number
+    event?: {
+      id?: string
+      title: string
+    }
+  }
+  quantity?: number
+  order?: {
+    id: string
+    status: OrderStatus
+    quantity: number
+    remainingTickets: number
+  }
+}

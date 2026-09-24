@@ -1,5 +1,5 @@
 import { httpClient } from './http.client'
-import type { ApiResponse, Order, TicketItem } from '@/types'
+import type { ApiResponse, CheckInResult, Order } from '@/types'
 
 export interface HoldTicketPayload {
   ticketTierId: string
@@ -37,9 +37,9 @@ export const ordersApi = {
     return res.data.data || []
   },
 
-  checkInTicket: async (ticketId: string): Promise<{ ticket: TicketItem; order: Order }> => {
-    const res = await httpClient.post<ApiResponse<{ ticket: TicketItem; order: Order }>>(
-      `/tickets/${ticketId}/check-in`
+  checkInTicket: async (identifier: string): Promise<CheckInResult> => {
+    const res = await httpClient.post<ApiResponse<CheckInResult>>(
+      `/orders/${identifier}/check-in`
     )
     if (!res.data.data) {
       throw new Error(res.data.message || 'Check-in failed')
@@ -47,3 +47,4 @@ export const ordersApi = {
     return res.data.data
   },
 }
+

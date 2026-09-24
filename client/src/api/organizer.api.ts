@@ -1,18 +1,21 @@
 import { httpClient } from './http.client'
-import type { ApiResponse, EventItem, OrganizerMetrics, TicketTier } from '@/types'
+import type { ApiResponse, OrganizerEventItem, OrganizerMetrics, TicketTier } from '@/types'
 
 export interface OrganizerDashboardData {
   metrics: OrganizerMetrics
-  events: EventItem[]
+  events: OrganizerEventItem[]
 }
 
 export interface CreateEventPayload {
   title: string
-  description?: string
+  description: string
   venue?: string
-  saleStartTime: string
-  saleEndTime: string
-  eventDate: string
+  bannerUrl?: string
+  startTime: string
+  endTime: string
+  saleStartTime?: string | null
+  saleEndTime?: string | null
+  status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'CANCELLED'
   ticketTiers?: Array<{
     name: string
     price: number
@@ -23,15 +26,44 @@ export interface CreateEventPayload {
 
 export const organizerApi = {
   getMyEvents: async (): Promise<OrganizerDashboardData> => {
-    const res = await httpClient.get<ApiResponse<OrganizerDashboardData>>('/events/organizer/my-events')
-    if (!res.data.data) {
-      throw new Error(res.data.message || 'Failed to fetch organizer dashboard')
+    const res = await httpClient.get<ApiResponse<OrganizerEventItem[] | { events: OrganizerEventItem[]; metrics?: OrganizerMetrics }>>('/events/organizer/my-events')
+    
+    // Handle both raw array or object format
+    const rawData = res.data.data
+    const events: OrganizerEventItem[] = Array.isArray(rawData)
+      ? rawData
+      : (rawData && 'events' in rawData && Array.isArray(rawData.events))
+        ? rawData.events
+        : []
+
+    let totalRevenue = 0
+    let totalTicketsSold = 0
+    let totalStock = 0
+    let availableStock = 0
+
+    for (const evt of events) {
+      totalRevenue += evt.totalRevenue ?? evt.stats?.totalRevenue ?? 0
+      totalTicketsSold += evt.totalTicketsSold ?? evt.stats?.totalTicketsSold ?? 0
+      totalStock += evt.totalStock ?? evt.stats?.totalStock ?? 0
+      availableStock += evt.availableStock ?? evt.stats?.availableStock ?? 0
     }
-    return res.data.data
+
+    const soldOutPercentage = totalStock > 0 ? Math.round((totalTicketsSold / totalStock) * 100) : 0
+
+    const metrics: OrganizerMetrics = {
+      totalEvents: events.length,
+      totalStock,
+      availableStock,
+      totalTicketsSold,
+      totalRevenue,
+      soldOutPercentage,
+    }
+
+    return { metrics, events }
   },
 
-  createEvent: async (payload: CreateEventPayload): Promise<EventItem> => {
-    const res = await httpClient.post<ApiResponse<EventItem>>('/events', payload)
+  createEvent: async (payload: Omit<CreateEventPayload, 'ticketTiers'>): Promise<OrganizerEventItem> => {
+    const res = await httpClient.post<ApiResponse<OrganizerEventItem>>('/events', payload)
     if (!res.data.data) {
       throw new Error(res.data.message || 'Create event failed')
     }
@@ -49,8 +81,24 @@ export const organizerApi = {
     return res.data.data
   },
 
-  updateEvent: async (eventId: string, payload: Partial<CreateEventPayload>): Promise<EventItem> => {
-    const res = await httpClient.patch<ApiResponse<EventItem>>(`/events/${eventId}`, payload)
+  createEventWithTiers: async (payload: CreateEventPayload): Promise<OrganizerEventItem> => {
+    const { ticketTiers, ...eventData } = payload
+    const event = await organizerApi.createEvent(eventData)
+
+    if (ticketTiers && ticketTiers.length > 0) {
+      const createdTiers: TicketTier[] = []
+      for (const tier of ticketTiers) {
+        const createdTier = await organizerApi.createTicketTier(event.id, tier)
+        createdTiers.push(createdTier)
+      }
+      event.ticketTiers = createdTiers
+    }
+
+    return event
+  },
+
+  updateEvent: async (eventId: string, payload: Partial<CreateEventPayload>): Promise<OrganizerEventItem> => {
+    const res = await httpClient.patch<ApiResponse<OrganizerEventItem>>(`/events/${eventId}`, payload)
     if (!res.data.data) {
       throw new Error(res.data.message || 'Update event failed')
     }
@@ -61,3 +109,4 @@ export const organizerApi = {
     await httpClient.delete(`/events/${eventId}`)
   },
 }
+

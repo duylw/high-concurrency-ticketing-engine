@@ -23,7 +23,7 @@ export interface EventItem {
   organizerId: string
   totalStock: number
   availableStock: number
-  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED'
+  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED' | 'CLOSED'
   createdAt?: string
   updatedAt?: string
   ticketTiers?: TicketTier[]
@@ -36,4 +36,19 @@ export interface OrganizerMetrics {
   totalTicketsSold: number
   totalRevenue: number
   soldOutPercentage: number
+}
+
+export interface OrganizerEventItem extends EventItem {
+  stats?: {
+    totalStock: number
+    availableStock: number
+    totalTicketsSold: number
+    totalRevenue: number
+    soldOutPercentage: number
+  }
+  totalTicketsSold?: number
+  totalRevenue?: number
+  soldOutPercentage?: number
+  startTime?: string
+  endTime?: string
 }
