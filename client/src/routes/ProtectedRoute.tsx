@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
@@ -6,13 +6,23 @@ import { useToast } from '@/context/ToastContext'
 export const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading, openAuthModal } = useAuth()
   const toast = useToast()
+  const wasAuthenticatedRef = useRef(isAuthenticated)
+  const hasNotifiedRef = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // If the user was authenticated when this route mounted and now logged out,
+    // do not trigger unauthorized warnings or open login modal
+    if (wasAuthenticatedRef.current && !isAuthenticated) {
+      return
+    }
+
+    if (!isLoading && !isAuthenticated && !hasNotifiedRef.current) {
+      hasNotifiedRef.current = true
       toast.warning('Vui lòng đăng nhập để truy cập trang này.', 'Yêu Cầu Đăng Nhập')
       openAuthModal()
     }
   }, [isLoading, isAuthenticated, openAuthModal, toast])
+
 
   if (isLoading) {
     return (

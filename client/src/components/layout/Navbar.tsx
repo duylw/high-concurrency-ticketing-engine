@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Ticket, LogIn, LogOut, User, QrCode, LayoutDashboard } from 'lucide-react'
 import { Button, Badge } from '@/components/common'
 import { useAuth } from '@/context/AuthContext'
@@ -8,8 +8,20 @@ import { cn } from '@/utils/cn'
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, isOrganizer, logout, openAuthModal } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const isActive = (path: string) => location.pathname === path
+
+  const handleLogout = async () => {
+    if (
+      location.pathname.startsWith('/organizer') ||
+      location.pathname.startsWith('/scanner') ||
+      location.pathname.startsWith('/my-orders')
+    ) {
+      navigate('/', { replace: true })
+    }
+    await logout()
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-[#07090E]/85 backdrop-blur-md border-b border-border-subtle">
@@ -93,11 +105,12 @@ export const Navbar: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 leftIcon={<LogOut size={15} />}
-                onClick={() => logout()}
+                onClick={handleLogout}
                 title="Đăng xuất"
               >
                 Đăng Xuất
               </Button>
+
             </div>
           ) : (
             <Button
