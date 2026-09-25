@@ -86,10 +86,10 @@ export const CheckoutDrawer: React.FC<CheckoutDrawerProps> = ({
             rightIcon={<ArrowRight size={18} />}
             onClick={handleCheckout}
           >
-            {countdown.isExpired ? 'Hết Hạn Giữ Vé' : 'Thanh Toán An Toàn (Idempotent)'}
+            {countdown.isExpired ? 'Hết Hạn Giữ Vé' : 'Xác Nhận & Thanh Toán'}
           </Button>
           <p className="text-[11px] text-text-muted text-center">
-            Giao dịch được bảo vệ bằng cơ chế X-Idempotency-Key và khóa bi quan PostgreSQL.
+            Giao dịch được mã hóa và bảo vệ an toàn 100%.
           </p>
         </div>
       }
@@ -114,7 +114,7 @@ export const CheckoutDrawer: React.FC<CheckoutDrawerProps> = ({
               </span>
             </div>
             <p className="text-xs text-text-muted mt-1 leading-relaxed">
-              Hàng đợi BullMQ sẽ tự động hoàn vé về kho nếu thanh toán không hoàn tất trước khi hết giờ.
+              Vé sẽ tự động được hoàn về kho nếu bạn không hoàn tất thanh toán trước khi hết giờ.
             </p>
           </div>
         </div>

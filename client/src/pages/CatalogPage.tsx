@@ -123,8 +123,8 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({ defaultTab = 'all' }) 
           </h1>
 
           <p className="text-base sm:text-lg text-text-secondary mb-8 leading-relaxed max-w-[680px] mx-auto">
-            Trải nghiệm săn vé Flash-Sale mượt mà với cơ chế bảo vệ kho vé phân tán,
-            ngăn chặn bán khống và thanh toán an toàn.
+            Khám phá và đặt vé các sự kiện âm nhạc, giải trí và thể thao hàng đầu.
+            Đặt chỗ nhanh chóng, giữ vé công bằng và thanh toán an toàn.
           </p>
 
           {/* Search Input Bar */}
@@ -171,7 +171,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({ defaultTab = 'all' }) 
                   : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
               }`}
             >
-              Đang Mở Bán ⚡
+              Đang Mở Bán
             </button>
 
             <button
@@ -183,7 +183,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({ defaultTab = 'all' }) 
                   : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
               }`}
             >
-              Sắp Mở Bán ⏳
+              Sắp Mở Bán
             </button>
           </div>
         </section>

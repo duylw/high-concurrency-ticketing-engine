@@ -221,7 +221,7 @@ export const DevTestingPage: React.FC = () => {
                 variant="secondary"
                 size="sm"
                 leftIcon={<AlertTriangle size={14} />}
-                onClick={() => toast.warning('Còn 2 phút giữ vé trước khi BullMQ hoàn vé.')}
+                onClick={() => toast.warning('Sắp hết thời gian giữ vé! Vui lòng thanh toán.')}
               >
                 Toast Warning
               </Button>
@@ -274,7 +274,7 @@ export const DevTestingPage: React.FC = () => {
           }
         >
           <p className="text-text-secondary leading-relaxed">
-            Đồng hồ giữ vé 10 phút của BullMQ đang chạy.
+            Đồng hồ giữ vé đang đếm ngược theo thời gian thực.
           </p>
         </Drawer>
       </div>

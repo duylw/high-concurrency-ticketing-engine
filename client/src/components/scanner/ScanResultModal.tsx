@@ -53,7 +53,7 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
 
             <div>
               <span className="inline-block px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 font-extrabold text-xs uppercase tracking-widest border border-rose-500/30 mb-2">
-                Anti-Passback Vi Phạm
+                Cảnh Báo Quét Trùng Lặp
               </span>
               <h2 className="text-2xl font-black text-rose-400 tracking-tight">
                 VÉ ĐÃ ĐƯỢC SỬ DỤNG!

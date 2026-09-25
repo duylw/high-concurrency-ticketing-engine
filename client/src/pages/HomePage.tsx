@@ -14,13 +14,13 @@ export const HomePage: React.FC = () => {
         <div className="inline-flex mb-4">
           <Badge variant="glow">
             <Sparkles size={12} className="mr-1.5 text-brand-neon" />
-            Nền Tảng Đặt Vé Trực Tuyến Tải Cao
+            Nền Tảng Đặt Vé Sự Kiện Trực Tuyến
           </Badge>
         </div>
 
         {/* Hero Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-text-primary mb-6 leading-tight">
-          Săn Vé Flash-Sale <br className="hidden sm:inline" />
+          Săn Vé Sự Kiện & Hòa Nhạc <br className="hidden sm:inline" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
             Tốc Độ Cao & An Toàn Tuyệt Đối
           </span>
@@ -28,8 +28,8 @@ export const HomePage: React.FC = () => {
 
         {/* Subtitle */}
         <p className="max-w-[720px] mx-auto text-lg text-text-secondary mb-10 leading-relaxed">
-          Hệ thống bán vé sự kiện quy mô lớn với cơ chế khóa bi quan (Pessimistic Locking),
-          chống bán khống (Zero Overselling), và cổng soát vé 4 kênh chuẩn quốc tế ISO/IEC 18004.
+          Nền tảng phân phối vé trực tuyến hàng đầu, mang đến trải nghiệm đặt vé mượt mà,
+          giữ chỗ công bằng và xác thực vé điện tử bằng mã QR tiện lợi.
         </p>
 
         {/* CTA Buttons */}
@@ -51,9 +51,9 @@ export const HomePage: React.FC = () => {
             </Button>
           )}
 
-          <Link to="/dev">
-            <Button variant="outline" size="lg" leftIcon={<Zap size={18} />}>
-              Testing Studio & DevTools (/dev)
+          <Link to="/">
+            <Button variant="outline" size="lg" leftIcon={<Ticket size={18} />}>
+              Khám Phá Sự Kiện
             </Button>
           </Link>
         </div>
@@ -64,9 +64,9 @@ export const HomePage: React.FC = () => {
             <div className="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-brand-neon mb-4">
               <Ticket size={24} />
             </div>
-            <h3 className="text-lg font-bold text-text-primary mb-2">Flash-Sale Engine</h3>
+            <h3 className="text-lg font-bold text-text-primary mb-2">Săn Vé Nhanh Chóng</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Xử lý hàng nghìn lượt cạnh tranh vé cùng thời điểm với độ trễ dưới 15ms qua Redis Caching và BullMQ.
+              Trải nghiệm đặt vé mượt mà, tối ưu tốc độ phản hồi ngay cả trong những đợt mở bán sự kiện hot nhất.
             </p>
           </div>
 
@@ -74,9 +74,9 @@ export const HomePage: React.FC = () => {
             <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
               <ShieldCheck size={24} />
             </div>
-            <h3 className="text-lg font-bold text-text-primary mb-2">Zero Overselling</h3>
+            <h3 className="text-lg font-bold text-text-primary mb-2">Giữ Chỗ An Toàn</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              PostgreSQL Row-level Locking và Distributed Idempotency loại bỏ triệt để tình trạng thanh toán trùng.
+              Quy trình thanh toán được bảo mật cao cấp, đảm bảo mỗi vé được giữ chỗ công bằng và đến đúng tay người mua.
             </p>
           </div>
 
@@ -84,9 +84,9 @@ export const HomePage: React.FC = () => {
             <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
               <Zap size={24} />
             </div>
-            <h3 className="text-lg font-bold text-text-primary mb-2">Universal QR Scanner</h3>
+            <h3 className="text-lg font-bold text-text-primary mb-2">Soát Vé Mã QR Tiện Lợi</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Trạm soát vé WebRTC thời gian thực 180ms, chống quét đúp Anti-Passback bảo vệ cổng sự kiện.
+              Mã vé điện tử bảo mật duy nhất cho mỗi khách hàng, hỗ trợ làm thủ tục vào cổng sự kiện nhanh chóng và dễ dàng.
             </p>
           </div>
         </div>

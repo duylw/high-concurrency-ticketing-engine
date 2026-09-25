@@ -128,7 +128,7 @@ export const EventDetailPage: React.FC = () => {
       setPendingOrder(order)
       setIsCheckoutOpen(true)
       toast.success(
-        `Đã giữ ${selectedQuantity} vé thành công! Bạn có 10 phút để hoàn tất thanh toán.`,
+        `Đã giữ ${selectedQuantity} vé thành công! Vui lòng hoàn tất thanh toán trước khi hết giờ.`,
         'Giữ Chỗ Thành Công'
       )
     } catch (err) {
@@ -371,15 +371,14 @@ export const EventDetailPage: React.FC = () => {
                   ? 'Sự Kiện Đã Đóng Bán'
                   : selectedTier && selectedTier.availableStock <= 0
                   ? 'Hạng Vé Đã Hết'
-                  : 'Giữ Vé Ngay (10 Phút)'}
+                  : 'Giữ Vé & Thanh Toán'}
               </Button>
 
-              {/* Concurrency Guarantee Notice */}
+              {/* Order Hold Notice */}
               <div className="p-3 bg-white/[0.02] border border-border-subtle rounded-xl flex items-start gap-2.5 text-xs text-text-muted leading-relaxed">
                 <ShieldCheck size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                 <span>
-                  Kho vé được khóa an toàn trong 10 phút. Nếu không hoàn tất thanh toán trước khi hết giờ,
-                  hệ thống sẽ tự động hoàn vé về kho cho người khác.
+                  Vé sẽ được tạm giữ cho bạn trong thời gian quy định. Vui lòng hoàn tất thanh toán trước khi đồng hồ đếm ngược kết thúc để đảm bảo giữ chỗ thành công.
                 </span>
               </div>
             </div>

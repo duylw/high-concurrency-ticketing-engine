@@ -238,7 +238,7 @@ export const GateScannerPage: React.FC = () => {
             Trạm Soát Vé Cổng Đa Kênh (Gate Scanner)
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Quét mã QR liên tục, nhận diện qua Camera, ảnh chụp, clipboard và chống gian lận Anti-Passback
+            Quét mã QR soát vé qua Camera, ảnh chụp, clipboard và tự động cảnh báo vé trùng lặp
           </p>
         </div>
 

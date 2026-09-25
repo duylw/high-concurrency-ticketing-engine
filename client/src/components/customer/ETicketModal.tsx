@@ -132,12 +132,12 @@ export const ETicketModal: React.FC<ETicketModalProps> = ({ isOpen, onClose, ord
           </div>
         </div>
 
-        {/* Anti-Passback Note */}
+        {/* Check-in Note */}
         <div className="flex items-start gap-2.5 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200">
           <QrCode size={16} className="shrink-0 mt-0.5 text-brand-neon" />
           <p className="leading-relaxed">
-            Xuất trình mã QR này tại cổng sự kiện để nhân viên soát vé quét mã. Mỗi mã chỉ có hiệu
-            lực cho đúng 01 lượt vào cổng duy nhất (hệ thống tự động kích hoạt cơ chế Anti-Passback).
+            Vui lòng xuất trình mã QR này tại cổng sự kiện để làm thủ tục vào cổng. Mỗi mã vé chỉ có hiệu
+            lực cho 01 lượt check-in duy nhất và không thể tái sử dụng.
           </p>
         </div>
       </div>
