@@ -4,7 +4,7 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import rootRouter from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
-import { NotFoundError } from "./errors/AppError.js";
+import { NotFoundError, ForbiddenError } from "./errors/AppError.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,23 +14,25 @@ const app = express();
 /**
  * 1. Global Pre-Middlewares
  */
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
-  : [
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:4173",
-      "http://localhost:3000",
-    ];
-
 app.use(
   cors({
     origin: (origin, callback) => {
+      const allowedOrigins = process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+        : [
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:4173",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:4173",
+            "http://localhost:3000",
+          ];
+
       if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(null, true);
+      return callback(new ForbiddenError(`CORS Error: Origin ${origin} is not allowed.`));
     },
     credentials: true,
   })

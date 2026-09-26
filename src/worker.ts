@@ -1,11 +1,8 @@
-import { config } from "dotenv";
+import "dotenv/config";
 import { connectDB, disconnectDB } from "./config/db.js";
 import { connectRedis, disconnectRedis } from "./config/redis.js";
 import { ticketReleaseWorker } from "./workers/ticketRelease.worker.js";
 import { notificationWorker } from "./workers/notification.worker.js";
-
-// Load environment variables
-config();
 
 /**
  * Dedicated BullMQ Background Worker Process

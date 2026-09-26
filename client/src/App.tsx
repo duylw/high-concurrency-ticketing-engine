@@ -33,7 +33,7 @@ export const App: React.FC = () => {
           <Route path="/schedule" element={<CatalogPage defaultTab="upcoming" />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
           <Route path="/home" element={<HomePage />} />
-          <Route path="/dev" element={<DevTestingPage />} />
+          {import.meta.env.DEV && <Route path="/dev" element={<DevTestingPage />} />}
 
           {/* Protected Customer Routes */}
           <Route element={<ProtectedRoute />}>
