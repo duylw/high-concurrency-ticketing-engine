@@ -5,6 +5,8 @@ import cors from "cors";
 import rootRouter from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { NotFoundError, ForbiddenError } from "./errors/AppError.js";
+import { requestIdMiddleware } from "./middlewares/requestId.middleware.js";
+import { httpLoggingMiddleware } from "./middlewares/logging.middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,8 +14,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 /**
- * 1. Global Pre-Middlewares
+ * 1. Global Pre-Middlewares (Tracing & Observability First)
  */
+app.use(requestIdMiddleware);
+app.use(httpLoggingMiddleware);
 app.use(
   cors({
     origin: (origin, callback) => {

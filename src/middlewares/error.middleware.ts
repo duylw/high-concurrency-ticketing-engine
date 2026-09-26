@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { HttpStatus, HttpStatusCode } from "../constants/httpStatus.js";
 import { AppError } from "../errors/AppError.js";
+import { logger } from "../utils/logger.util.js";
 
 interface PrismaErrorLike {
   code?: string;
@@ -46,7 +47,7 @@ const handleJWTExpiredError = (): AppError =>
  */
 export const errorHandler = (
   err: Error & { statusCode?: HttpStatusCode; errors?: unknown; code?: string },
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): Response => {
@@ -83,9 +84,24 @@ export const errorHandler = (
     ...(isDevelopment && err.stack ? { stack: err.stack } : {}),
   };
 
-  // 5. Log error to console in development or if it's a 500 bug
+  // 5. Structured Error Logging
+  const logPayload = {
+    reqId: req.id || "unknown",
+    method: req.method,
+    url: req.originalUrl || req.url,
+    statusCode,
+    err: {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      stack: isDevelopment || statusCode >= 500 ? err.stack : undefined,
+    },
+  };
+
   if (statusCode >= 500) {
-    console.error("[Unhandled Error]:", err);
+    logger.error(logPayload, `[ERROR 5xx] ${req.method} ${req.originalUrl || req.url} - ${message}`);
+  } else {
+    logger.warn(logPayload, `[WARN ${statusCode}] ${req.method} ${req.originalUrl || req.url} - ${message}`);
   }
 
   return res.status(statusCode).json(response);

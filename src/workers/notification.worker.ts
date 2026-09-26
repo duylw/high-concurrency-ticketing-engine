@@ -1,5 +1,6 @@
 import { Worker, Job } from "bullmq";
 import { connection } from "../config/queue.js";
+import { logger } from "../utils/logger.util.js";
 
 export interface NotificationJobData {
   orderId: string;
@@ -12,15 +13,15 @@ export interface NotificationJobData {
 export const notificationWorker = new Worker<NotificationJobData>(
   "notification",
   async (job: Job<NotificationJobData>) => {
-    const { orderId } = job.data;
+    const { orderId, userEmail, eventTitle } = job.data;
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    console.log(`[WORKER] Processed notification for Order: ${orderId}`);
+    logger.info({ jobId: job.id, orderId, userEmail, eventTitle }, `[WORKER] Notification sent for Order: ${orderId}`);
   },
   { connection }
 );
 
 notificationWorker.on("failed", (job, err) => {
-  console.error(`[WORKER ERROR] Job ${job?.id} failed:`, err.message);
+  logger.error({ jobId: job?.id, err }, `[WORKER ERROR] Job ${job?.id} failed: ${err.message}`);
 });

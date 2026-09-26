@@ -3,6 +3,7 @@ import { connection } from "../config/queue.js";
 import { prismaClient } from "../config/db.js";
 import { CacheUtil } from "../utils/cache.util.js";
 import { CacheKeys } from "../constants/cacheKeys.js";
+import { logger } from "../utils/logger.util.js";
 
 export interface TicketReleaseJobData {
   orderId: string;
@@ -15,14 +16,14 @@ export const ticketReleaseWorker = new Worker<TicketReleaseJobData>(
   "ticket-release",
   async (job: Job<TicketReleaseJobData>) => {
     const { orderId, ticketTierId, quantity, eventId } = job.data;
-    console.log(`[WORKER] Processing ticket release for Order: ${orderId}`);
+    logger.info({ jobId: job.id, orderId, ticketTierId, quantity }, `[WORKER] Processing ticket release for Order: ${orderId}`);
 
     const order = await prismaClient.order.findUnique({
       where: { id: orderId },
     });
 
     if (!order || order.status !== "PENDING") {
-      console.log(`[WORKER] Order ${orderId} not found or status is not PENDING`);
+      logger.warn({ jobId: job.id, orderId, status: order?.status }, `[WORKER] Order ${orderId} skipped (status is not PENDING)`);
       return;
     }
 
@@ -50,7 +51,7 @@ export const ticketReleaseWorker = new Worker<TicketReleaseJobData>(
 
     await CacheUtil.del(CacheKeys.EVENT_DETAILS(eventId));
 
-    console.log(`[WORKER] Order ${orderId} processed successfully`);
+    logger.info({ jobId: job.id, orderId, restoredQuantity: quantity }, `[WORKER] Order ${orderId} tickets released successfully`);
   },
   {
     connection,
@@ -58,5 +59,5 @@ export const ticketReleaseWorker = new Worker<TicketReleaseJobData>(
 );
 
 ticketReleaseWorker.on("failed", (job, err) => {
-  console.error(`[WORKER ERROR] Job ${job?.id} failed:`, err.message);
+  logger.error({ jobId: job?.id, err }, `[WORKER ERROR] Job ${job?.id} failed: ${err.message}`);
 });

@@ -2,6 +2,7 @@ import "dotenv/config";
 import app from "./app.js";
 import { connectDB, disconnectDB } from "./config/db.js";
 import { connectRedis, disconnectRedis } from "./config/redis.js";
+import { logger } from "./utils/logger.util.js";
 
 const PORT = parseInt(process.env.PORT || "5001", 10);
 
@@ -16,27 +17,27 @@ const startServer = async (): Promise<void> => {
 
     // 2. Start HTTP server
     const server = app.listen(PORT, () => {
-      console.log(`[INFO] Server is listening on http://localhost:${PORT}`);
-      console.log(`[INFO] Health check: http://localhost:${PORT}/api/v1/health`);
+      logger.info({ port: PORT }, `[SERVER] HTTP server is listening on http://localhost:${PORT}`);
+      logger.info(`[SERVER] Health check endpoint: http://localhost:${PORT}/api/v1/health`);
     });
 
     /**
      * Graceful Shutdown Handler
      */
     const handleShutdown = async (signal: string): Promise<void> => {
-      console.log(`\n[SHUTDOWN] [${signal}] received. Shutting down gracefully...`);
+      logger.info(`[SHUTDOWN] [${signal}] received. Shutting down gracefully...`);
 
       server.close(async () => {
-        console.log("[SHUTDOWN] HTTP server closed.");
+        logger.info("[SHUTDOWN] HTTP server closed.");
         await disconnectDB();
         await disconnectRedis();
-        console.log("[SHUTDOWN] Process terminated cleanly.");
+        logger.info("[SHUTDOWN] Process terminated cleanly.");
         process.exit(0);
       });
 
       // Force shutdown after 10 seconds if graceful shutdown is hanging
       setTimeout(() => {
-        console.error("[SHUTDOWN] Forcefully shutting down due to timeout.");
+        logger.error("[SHUTDOWN] Forcefully shutting down due to timeout.");
         process.exit(1);
       }, 10000);
     };
@@ -47,16 +48,16 @@ const startServer = async (): Promise<void> => {
 
     // Catch unhandled Promise rejections and uncaught exceptions
     process.on("unhandledRejection", (err: unknown) => {
-      console.error("[ERROR] Unhandled Promise Rejection:", err);
+      logger.error({ err }, "[ERROR] Unhandled Promise Rejection");
     });
 
     process.on("uncaughtException", (err: Error) => {
-      console.error("[ERROR] Uncaught Exception:", err);
+      logger.error({ err }, "[ERROR] Uncaught Exception");
       process.exit(1);
     });
   } catch (error) {
     const err = error as Error;
-    console.error("[ERROR] Failed to start server:", err.message);
+    logger.error({ err }, `[ERROR] Failed to start server: ${err.message}`);
     process.exit(1);
   }
 };
