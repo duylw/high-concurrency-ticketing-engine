@@ -1,8 +1,9 @@
 import { prismaClient } from "../config/db.js";
 import { CacheKeys } from "../constants/cacheKeys.js";
 import { CacheUtil } from "../utils/cache.util.js";
-import { ConflictError, NotFoundError, BadRequestError } from "../errors/AppError.js";
+import { ConflictError, NotFoundError } from "../errors/AppError.js";
 import { ticketReleaseQueue } from "../config/queue.js";
+import { validateFlashSaleWindow } from "../utils/ticket-domain.util.js";
 
 const HOLD_DURATION_MS = parseInt(process.env.TICKET_HOLD_DURATION_MS || "600000", 10);
 
@@ -56,24 +57,7 @@ export const holdTicket = async (
         throw new NotFoundError("Event not found");
       }
 
-      if (event.status === "CLOSED" || event.status === "CANCELLED") {
-        throw new ConflictError(
-          `Event is ${event.status.toLowerCase()}. Ticket sales are closed.`
-        );
-      }
-
-      const now = new Date();
-      if (event.saleStartTime && now < event.saleStartTime) {
-        throw new BadRequestError(
-          `Flash-sale has not started yet. Opens at: ${event.saleStartTime.toISOString()}`
-        );
-      }
-
-      if (event.saleEndTime && now > event.saleEndTime) {
-        throw new BadRequestError(
-          `Flash-sale window has closed at: ${event.saleEndTime.toISOString()}`
-        );
-      }
+      validateFlashSaleWindow(event);
 
       if (tier.available_stock < quantity) {
         throw new ConflictError("Insufficient stock");

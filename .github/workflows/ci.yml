@@ -1,0 +1,121 @@
+name: CI Quality Gate
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [dev]
+
+jobs:
+  # ============================================================================
+  # JOB 1: Static Analysis & Fast Unit Tests (Runs in RAM without DB)
+  # ============================================================================
+  unit-tests-and-quality:
+    name: Code Quality, Typecheck & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Install Frontend Dependencies
+        run: npm ci --prefix client
+
+      - name: Run Client Linter
+        run: npm run lint --prefix client
+
+      - name: Backend Static Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Frontend Static Build & Typecheck (vite build)
+        run: npm run build:client
+
+      - name: Run Fast Unit Tests (Node.js 22 Native Test Runner)
+        run: npm run test:unit
+
+  # ============================================================================
+  # JOB 2: Integration Tests (With Ephemeral PostgreSQL 16 & Redis 7 Services)
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests (PostgreSQL 16 & Redis 7)
+    needs: unit-tests-and-quality
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PORT: 5001
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_ACCESS_SECRET: "ci-test-jwt-access-secret-minimum-32-chars-long"
+      JWT_REFRESH_SECRET: "ci-test-jwt-refresh-secret-minimum-32-chars-long"
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      TICKET_HOLD_DURATION_MS: 600000
+      MAX_TICKETS_PER_ORDER: 4
+      EVENT_CACHE_TTL_SECONDS: 3600
+      EVENT_LIST_CACHE_TTL_SECONDS: 300
+      CORS_ORIGIN: "http://localhost:5173"
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 with NPM Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Synchronize Database Schema (Prisma DB Push)
+        run: npx prisma db push --skip-generate
+
+      - name: Build Backend TypeScript
+        run: npm run build
+
+      - name: Start Background Express API Server & BullMQ Worker
+        run: |
+          node dist/server.js &
+          node dist/worker.js &
+          timeout 30 bash -c 'until curl -s http://localhost:5001/api/v1/health | grep -q "healthy"; do sleep 1; done'
+
+      - name: Run Full Integration Test Suite
+        run: npm run test:integration

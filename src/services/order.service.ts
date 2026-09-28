@@ -7,6 +7,11 @@ import {
   ConflictError,
 } from "../errors/AppError.js";
 import { notificationQueue } from "../config/queue.js";
+import {
+  generateTicketCode,
+  validateGateAdmission,
+  computeAggregatedOrderStatus,
+} from "../utils/ticket-domain.util.js";
 
 export const checkout = async (
   orderId: string,
@@ -49,12 +54,9 @@ export const checkout = async (
     });
 
     const ticketsData = [];
-    const datePrefix = new Date().toISOString().slice(0, 7).replace("-", "");
-    const shortOrderId = order.id.slice(0, 8).toUpperCase();
-
     for (let i = 1; i <= order.quantity; i++) {
       const ticketId = crypto.randomUUID();
-      const ticketCode = `TKT-${datePrefix}-${shortOrderId}-${String(i).padStart(2, "0")}`;
+      const ticketCode = generateTicketCode(order.id, i);
       const qrPayload = JSON.stringify({
         ticketId,
         ticketCode,
@@ -205,24 +207,8 @@ export const checkInOrder = async (
       throw new ForbiddenError("You are not authorized to check in tickets for this event");
     }
 
-    // Anti-Passback defense: Check if this specific ticket was already used
-    if (ticket.status === "CHECKED_IN") {
-      const timeStr = ticket.checkedInAt
-        ? new Date(ticket.checkedInAt).toLocaleTimeString("vi-VN")
-        : "earlier";
-      throw new ConflictError(`Ticket has ALREADY been used for check-in at ${timeStr}!`);
-    }
-
-    if (ticket.status === "REVOKED") {
-      throw new BadRequestError("Ticket has been REVOKED and cannot be used.");
-    }
-
-    // Validate parent order status: Must be COMPLETED or PARTIALLY_CHECKED_IN
-    if (ticket.order.status !== "COMPLETED" && ticket.order.status !== "PARTIALLY_CHECKED_IN") {
-      throw new BadRequestError(
-        `Cannot check-in ticket with order status '${ticket.order.status}'. Only COMPLETED orders can be checked in.`
-      );
-    }
+    // Anti-Passback defense and ticket eligibility validation
+    validateGateAdmission(ticket, ticket.order.status);
 
     const checkedInResult = await prismaClient.$transaction(async (tx) => {
       // Mark individual ticket as CHECKED_IN
@@ -251,7 +237,7 @@ export const checkInOrder = async (
       });
 
       // If 0 remaining unchecked tickets -> whole order is CHECKED_IN, otherwise PARTIALLY_CHECKED_IN
-      const newOrderStatus = remainingTickets === 0 ? "CHECKED_IN" : "PARTIALLY_CHECKED_IN";
+      const newOrderStatus = computeAggregatedOrderStatus(remainingTickets);
 
       await tx.order.update({
         where: { id: ticket.orderId },
