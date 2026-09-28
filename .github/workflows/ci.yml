@@ -107,8 +107,13 @@ jobs:
           node-version: 22
           cache: "npm"
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install Backend & Frontend Dependencies
+        run: |
+          npm ci
+          npm ci --prefix client
+
+      - name: Build Frontend Client Bundle
+        run: npm run build:client
 
       - name: Synchronize Database Schema (Prisma DB Push)
         run: npx prisma db push
