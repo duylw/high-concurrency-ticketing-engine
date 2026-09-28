@@ -118,6 +118,11 @@ jobs:
       - name: Synchronize Database Schema (Prisma DB Push)
         run: npx prisma db push
 
+      - name: Seed Database Test Fixtures
+        run: |
+          npm run db:seed
+          npm run seed:events
+
       - name: Build Backend TypeScript
         run: npm run build
 
