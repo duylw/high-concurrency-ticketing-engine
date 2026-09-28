@@ -95,7 +95,7 @@ jobs:
       MAX_TICKETS_PER_ORDER: 4
       EVENT_CACHE_TTL_SECONDS: 3600
       EVENT_LIST_CACHE_TTL_SECONDS: 300
-      CORS_ORIGIN: "http://localhost:5173"
+      CORS_ORIGIN: "http://localhost:5173,http://localhost:4173"
 
     steps:
       - name: Checkout Codebase
