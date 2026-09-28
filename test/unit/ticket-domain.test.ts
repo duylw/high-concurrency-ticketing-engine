@@ -115,6 +115,16 @@ describe("Unit Tests: Core Ticketing & Gate Admission Domain Rules (Imported fro
           return true;
         }
       );
+
+      // Even if parent order is already marked CHECKED_IN on repeated scan
+      assert.throws(
+        () => validateGateAdmission(ticket, "CHECKED_IN"),
+        (err: unknown) => {
+          assert.ok(err instanceof ConflictError);
+          assert.match((err as ConflictError).message, /ALREADY been used/);
+          return true;
+        }
+      );
     });
 
     it("should block entry with BadRequestError if ticket is REVOKED", () => {

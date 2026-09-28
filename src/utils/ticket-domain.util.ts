@@ -58,14 +58,7 @@ export const validateGateAdmission = (
   ticket: CheckInTicketInput,
   parentOrderStatus: string
 ): void => {
-  // Validate parent order status
-  if (parentOrderStatus !== "COMPLETED" && parentOrderStatus !== "PARTIALLY_CHECKED_IN") {
-    throw new BadRequestError(
-      `Cannot check-in ticket with order status '${parentOrderStatus}'. Only COMPLETED orders can be checked in.`
-    );
-  }
-
-  // Anti-Passback defense: Check if ticket was already used
+  // 1. Anti-Passback defense: Check if this specific ticket was already scanned
   if (ticket.status === "CHECKED_IN") {
     const timeStr = ticket.checkedInAt
       ? new Date(ticket.checkedInAt).toLocaleTimeString("vi-VN")
@@ -73,9 +66,16 @@ export const validateGateAdmission = (
     throw new ConflictError(`Ticket has ALREADY been used for check-in at ${timeStr}!`);
   }
 
-  // Revocation check
+  // 2. Revocation check
   if (ticket.status === "REVOKED") {
     throw new BadRequestError("Ticket has been REVOKED and cannot be used.");
+  }
+
+  // 3. Parent order status validity: Must be a paid order (COMPLETED or PARTIALLY_CHECKED_IN)
+  if (parentOrderStatus !== "COMPLETED" && parentOrderStatus !== "PARTIALLY_CHECKED_IN") {
+    throw new BadRequestError(
+      `Cannot check-in ticket with order status '${parentOrderStatus}'. Only COMPLETED orders can be checked in.`
+    );
   }
 };
 
