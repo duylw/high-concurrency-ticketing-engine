@@ -13,6 +13,8 @@ jobs:
   unit-tests-and-quality:
     name: Code Quality, Typecheck & Unit Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
 
     steps:
       - name: Checkout Codebase
