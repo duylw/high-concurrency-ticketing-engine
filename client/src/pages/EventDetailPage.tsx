@@ -311,7 +311,7 @@ export const EventDetailPage: React.FC = () => {
                         setSelectedQuantity(qty)
                       }}
                       disabled={!isSaleActive || tier.availableStock <= 0}
-                      maxPerOrder={4}
+                      maxPerOrder={parseInt(import.meta.env.VITE_MAX_TICKETS_PER_ORDER || '4', 10)}
                     />
                   </div>
                 ))}

@@ -4,8 +4,8 @@ import { CacheUtil } from "../utils/cache.util.js";
 import { CacheKeys } from "../constants/cacheKeys.js";
 import { NotFoundError, ForbiddenError } from "../errors/AppError.js";
 
-const EVENT_CACHE_TTL = 3600; // 1 hour for event details
-const EVENT_LIST_CACHE_TTL = 300; // 5 minutes for event list
+const EVENT_CACHE_TTL = parseInt(process.env.EVENT_CACHE_TTL_SECONDS || "3600", 10);
+const EVENT_LIST_CACHE_TTL = parseInt(process.env.EVENT_LIST_CACHE_TTL_SECONDS || "300", 10);
 
 import {
   CreateEventInput,

@@ -18,7 +18,7 @@ export const TicketTierCard: React.FC<TicketTierCardProps> = ({
   selectedQuantity,
   onQuantityChange,
   disabled = false,
-  maxPerOrder = 5,
+  maxPerOrder = parseInt(import.meta.env.VITE_MAX_TICKETS_PER_ORDER || '4', 10),
 }) => {
   const isSoldOut = tier.availableStock <= 0
   const isSelected = selectedQuantity > 0
