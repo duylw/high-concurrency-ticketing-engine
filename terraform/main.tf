@@ -12,6 +12,15 @@ provider "aws" {
 }
 
 # ==============================================================================
+# Variables
+# ==============================================================================
+variable "ssh_allowed_cidrs" {
+  description = "Allowed CIDR blocks for SSH access (Khuyến nghị: Chỉ điền IP của bạn, ví dụ: ['YOUR_IP/32'])"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+# ==============================================================================
 # 1. Tự động tạo Security Group (Mở cổng 22 SSH, 80 HTTP Nginx, 443 HTTPS)
 # ==============================================================================
 resource "aws_security_group" "web_sg" {
@@ -23,7 +32,7 @@ resource "aws_security_group" "web_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ssh_allowed_cidrs
   }
 
   ingress {
@@ -63,15 +72,24 @@ resource "aws_instance" "app_server" {
   root_block_device {
     volume_size           = 20 # 20 GiB gp3
     volume_type           = "gp3"
+    encrypted             = true # Mã hóa dữ liệu lưu trữ (Data-at-rest encryption)
     delete_on_termination = true
   }
 
-  # Cloud-init: Tự động cập nhật hệ thống và cài đặt Docker ngay khi vừa bật máy
+  # Bắt buộc sử dụng IMDSv2 để chống SSRF đánh cắp IAM credentials
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required" # IMDSv2 enforced
+    http_put_response_hop_limit = 1
+  }
+
+  # Cloud-init: Tự động cập nhật hệ thống và cài đặt Docker + Docker Compose plugin
   user_data = <<-EOF
               #!/bin/bash
               apt-get update -y
               apt-get install -y ca-certificates curl gnupg
               curl -fsSL https://get.docker.com | sh
+              apt-get install -y docker-compose-plugin
               usermod -aG docker ubuntu
               systemctl enable docker
               systemctl start docker

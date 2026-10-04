@@ -1,0 +1,115 @@
+name: CD Continuous Deployment
+
+on:
+  # Tạm thời tắt auto-deploy khi push code vào main
+  # push:
+  #   branches: [main]
+  workflow_dispatch: # Chỉ kích hoạt thủ công khi bấm nút "Run workflow" trên GitHub Actions
+
+jobs:
+  deploy-to-ec2:
+    name: Deploy to Production EC2 Instance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: SSH Remote Deployment to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "======================================================"
+            echo "[DEPLOY STEP 1] Moving to Production Directory..."
+            echo "======================================================"
+            if [ -d ~/software-project ]; then
+              cd ~/software-project
+            elif [ -d ~/ticketing-system ]; then
+              cd ~/ticketing-system
+            else
+              echo "[ERROR] Project directory not found on EC2 host!"
+              exit 1
+            fi
+
+            echo "======================================================"
+            echo "[DEPLOY STEP 2] Fetching Latest Code from main..."
+            echo "======================================================"
+            git fetch origin main
+            git checkout main
+            git pull origin main
+
+            echo "======================================================"
+            echo "[DEPLOY STEP 3] Ensuring SSL Certificates Exist..."
+            echo "======================================================"
+            if [ ! -f nginx/ssl/nginx.crt ] || [ ! -f nginx/ssl/nginx.key ]; then
+              echo "[SSL] Generating self-signed SSL certificate for Nginx..."
+              mkdir -p nginx/ssl
+              openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                -keyout nginx/ssl/nginx.key \
+                -out nginx/ssl/nginx.crt \
+                -subj "/C=VN/ST=HCM/L=HCM/O=Ticketing/CN=localhost"
+            fi
+
+            echo "======================================================"
+            echo "[DEPLOY STEP 4] Rebuilding & Starting Production Containers..."
+            echo "======================================================"
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            echo "======================================================"
+            echo "[DEPLOY STEP 4] Pruning Dangling Docker Images..."
+            echo "======================================================"
+            docker image prune -f
+
+            echo "======================================================"
+            echo "[DEPLOY SUCCESS] Containers updated successfully!"
+            echo "======================================================"
+
+      - name: Post-Deployment Smoke & Health Verification
+        run: |
+          echo "======================================================"
+          echo "[HEALTH CHECK] Probing Production Nginx Gateway: http://${{ secrets.EC2_HOST }}/api/v1/health"
+          echo "======================================================"
+          
+          MAX_RETRIES=10
+          RETRY_INTERVAL=5
+          HEALTHY=false
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "[PROBE $i/$MAX_RETRIES] Checking API health..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://${{ secrets.EC2_HOST }}/api/v1/health" || true)
+            
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              RESPONSE=$(curl -s --max-time 5 "http://${{ secrets.EC2_HOST }}/api/v1/health" || true)
+              echo "[RESPONSE] $RESPONSE"
+              echo "[SUCCESS] Production API responded with HTTP 200 OK!"
+              HEALTHY=true
+              break
+            fi
+
+            echo "[WARN] Server returned HTTP $HTTP_CODE (or unreachable). Retrying in ${RETRY_INTERVAL}s..."
+            sleep $RETRY_INTERVAL
+          done
+
+          if [ "$HEALTHY" = false ]; then
+            echo "[FATAL] Production Health Check failed after $MAX_RETRIES attempts!"
+            exit 1
+          fi
+
+      - name: Publish Deployment Summary
+        if: always()
+        run: |
+          echo "### Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target Environment** | Production AWS EC2 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Host / IP** | \`${{ secrets.EC2_HOST }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered By** | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit SHA** | [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ job.status == 'success' && 'SUCCESS' || 'FAILED' }} |" >> $GITHUB_STEP_SUMMARY
